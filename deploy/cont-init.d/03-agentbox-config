@@ -1,0 +1,29 @@
+#!/command/with-contenv sh
+# shellcheck shell=sh
+# Runs as root after 01-hermes-setup has seeded $HERMES_HOME.
+#
+# Agentbox's MaaS integration injects GMI_MAAS_API_KEY, but Hermes' gmi
+# provider reads GMI_API_KEY. Writing into the s6 container environment makes
+# the alias visible to every supervised service (gateway, cron).
+set -e
+
+envdir=/run/s6/container_environment
+
+if [ -z "${GMI_API_KEY:-}" ] && [ -n "${GMI_MAAS_API_KEY:-}" ]; then
+    printf '%s' "$GMI_MAAS_API_KEY" > "$envdir/GMI_API_KEY"
+    echo "[agentbox] GMI_API_KEY aliased from GMI_MAAS_API_KEY"
+fi
+
+# Log (never the value) whether Agentbox's base URL differs from Hermes'
+# default, so a mismatch is visible in the boot log.
+if [ -n "${GMI_MAAS_BASE_URL:-}" ]; then
+    echo "[agentbox] GMI_MAAS_BASE_URL=${GMI_MAAS_BASE_URL} (Hermes default: https://api.gmi-serving.com/v1)"
+fi
+
+# Pin provider and model in config.yaml so gateway and cron sessions agree.
+if [ -n "${HERMES_MODEL:-}" ]; then
+    export HOME="$HERMES_HOME"
+    s6-setuidgid hermes /opt/hermes/.venv/bin/hermes config set model.provider gmi
+    s6-setuidgid hermes /opt/hermes/.venv/bin/hermes config set model.default "$HERMES_MODEL"
+    echo "[agentbox] model pinned: gmi / ${HERMES_MODEL}"
+fi

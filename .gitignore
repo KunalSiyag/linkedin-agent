@@ -1,0 +1,10 @@
+# Upstream Hermes source checkout, kept locally for reference only.
+hermes-agent/
+
+# Real values and secrets stay local.
+.env
+*.env
+*.local
+
+__pycache__/
+*.pyc
