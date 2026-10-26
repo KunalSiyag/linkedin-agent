@@ -224,7 +224,8 @@ def record(d, kind, files, source):
 def check(text, d, codes=None):
     facts = (d / "facts.md").read_text(encoding="utf-8") if (d / "facts.md").exists() and codes is None else None
     res = lint(text, "comment", facts)
-    blocks = [f for f in res if f["level"] == "BLOCK" and (codes is None or f["code"] in codes)]
+    # Length limits are for post bodies; a carousel's total text is legitimately longer.
+    blocks = [f for f in res if f["level"] == "BLOCK" and f["code"] != "length" and (codes is None or f["code"] in codes)]
     for f in blocks:
         print(f"BLOCK {f['code']}: {f['msg']}" + (f"  {f['hits']}" if f.get("hits") else ""))
     if blocks:

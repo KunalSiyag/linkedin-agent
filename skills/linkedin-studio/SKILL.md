@@ -23,7 +23,8 @@ Put your own working files (draft text before `drafts.py new`, critic answers be
 **Commands.** Use the studio scripts plus plain read-only commands (`ls`, `cat`, `head`, `grep`, `wc`). Write files
 with your file tool. Don't run `python3 -c`, pipe into an interpreter, or use `curl`: every such command needs the
 owner's manual approval in Discord, and the scripts already cover it (`sources.py tree`/`file` fetch code from public
-repos, `sources.py github --brief` lists repos, `visuals.py` checks slide length).
+repos, `sources.py github --brief` lists repos, `visuals.py` checks slide length). Never edit or work around the
+studio's own scripts or references; if one fails, tell the owner what failed.
 
 ## Read first, every time
 

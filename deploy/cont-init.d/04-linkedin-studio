@@ -20,21 +20,28 @@ setenv GITHUB_USER "${REPO%%/*}"
 # Answer in the home channel without an @mention.
 [ -n "${DISCORD_HOME_CHANNEL:-}" ] && setenv DISCORD_FREE_RESPONSE_CHANNELS "$DISCORD_HOME_CHANNEL"
 
+# The checkout is owned by root and read-only to the agent (hermes), so the agent can't edit its own guardrails.
 if [ "${LINKEDIN_AGENT_SYNC:-true}" = "true" ]; then
   if [ -d "$LIVE/.git" ]; then
-    as_hermes git -C "$LIVE" fetch -q --depth 1 origin "$REF" && as_hermes git -C "$LIVE" reset -q --hard FETCH_HEAD \
+    chown -R root:root "$LIVE"
+    git -C "$LIVE" fetch -q --depth 1 origin "$REF" && git -C "$LIVE" reset -q --hard FETCH_HEAD \
       || echo "[linkedin-studio] git update failed; keeping the existing checkout"
   else
-    as_hermes git clone -q --depth 1 --branch "$REF" "https://github.com/$REPO.git" "$LIVE" \
+    git clone -q --depth 1 --branch "$REF" "https://github.com/$REPO.git" "$LIVE" \
       || echo "[linkedin-studio] git clone failed; using the baked copy"
   fi
 fi
+[ -d "$LIVE" ] && chown -R root:root "$LIVE" && chmod -R a+rX,go-w "$LIVE"
 SRC="$BAKED"
 [ -f "$LIVE/skills/linkedin-studio/SKILL.md" ] && SRC="$LIVE"
-echo "[linkedin-studio] skills from $SRC ($(as_hermes git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo baked))"
+echo "[linkedin-studio] skills from $SRC ($(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo baked))"
 
 as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state" "$LH/tmp"
-as_hermes cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md"
+cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md" && chown root:root "$HH/SOUL.md" && chmod 644 "$HH/SOUL.md"
+# The guardrail lists are root-owned too: change them from the console, not through the agent.
+for f in blocklist.txt never_name.txt sponsors.txt; do
+  [ -f "$LH/profile/$f" ] && chown root:root "$LH/profile/$f" && chmod 644 "$LH/profile/$f"
+done
 hermes config set skills.external_dirs "[\"$SRC/skills\"]" >/dev/null
 hermes config set timezone "${HERMES_TIMEZONE:-Asia/Kolkata}" >/dev/null
 # Models per role: profile/studio.json overrides the defaults. The critic runs as a delegated subagent, so
