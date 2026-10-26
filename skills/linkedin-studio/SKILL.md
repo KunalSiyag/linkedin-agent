@@ -44,7 +44,9 @@ State lives in `$LINKEDIN_HOME` (on Agentbox: `/opt/data/linkedin`): `profile/`,
    - `delegate_task` with goal: "You are an independent editor. Read the file <path> and follow its instructions
      exactly. Do not modify any files. Your final answer is only the JSON object it asks for." Give the path in
      `context`. Don't add your own opinion of the draft to the brief.
-   - Write the subagent's JSON answer to a file and run `critique.py save ID FILE`. It enforces the verdict rules.
+   - Write the subagent's JSON answer to a file and run `critique.py save ID FILE` every time, before revising.
+     It enforces the verdict rules, and `approve` refuses a draft without a stored critique of its latest
+     agent version.
    Apply the fixes that are right, save with `drafts.py revise ID --file ... --note "critic"`, and critique once more.
    If the verdict is still not "ship", tell the owner what's left instead of polishing forever. If it's "reject",
    drop the draft and explain why.

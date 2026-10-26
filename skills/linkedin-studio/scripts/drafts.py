@@ -88,7 +88,16 @@ def cmd_approve(a):
     if not meta["lint"]["ok"]:
         save(d, meta)
         sys.exit("refused: lint has BLOCK findings:\n" + "\n".join(f"- {f['code']}: {f['msg']}" for f in meta["lint"]["findings"] if f["level"] == "BLOCK"))
-    meta.update(status="approved", approved_at=now(), approved_version=meta["versions"])
+    crit = meta.get("critique")
+    if meta["kind"] == "post" and not a.skip_critique:
+        if not crit:
+            sys.exit("refused: no stored critique. Run critique.py prepare/save first.")
+        if crit["verdict"] == "reject":
+            sys.exit(f"refused: the critic rejected v{crit['version']}.")
+        if any(h["by"] == "agent" and h["v"] > crit["version"] for h in meta["history"]):
+            sys.exit(f"refused: v{meta['versions']} has agent changes made after the last critique (v{crit['version']}); critique it again.")
+    meta.update(status="approved", approved_at=now(), approved_version=meta["versions"],
+                critique_skipped=bool(a.skip_critique))
     save(d, meta)
     # Learn only from the owner's changes: the last agent version they saw vs. what they approved.
     owner = [h["v"] for h in meta["history"] if h["by"] == "owner"]
@@ -154,8 +163,11 @@ def main():
     r.add_argument("--file", required=True)
     r.add_argument("--note")
     r.add_argument("--by", choices=("agent", "owner"), default="agent")
-    for c in ("show", "text", "approve"):
+    for c in ("show", "text"):
         sub.add_parser(c).add_argument("id")
+    ap_ = sub.add_parser("approve")
+    ap_.add_argument("id")
+    ap_.add_argument("--skip-critique", action="store_true", help="only when the owner explicitly says to skip it")
     rj = sub.add_parser("reject")
     rj.add_argument("id")
     rj.add_argument("--reason", required=True)

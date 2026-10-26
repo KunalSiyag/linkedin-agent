@@ -32,7 +32,8 @@ def key():
 
 def call(method, path, body=None, timeout=300):
     req = urllib.request.Request(BASE + path, method=method, data=json.dumps(body).encode() if body else None,
-                                 headers={"Authorization": f"Bearer {key()}", "Content-Type": "application/json"})
+                                 headers={"Authorization": f"Bearer {key()}", "Content-Type": "application/json",
+                                          "User-Agent": "linkedin-studio/1.0"})  # Cloudflare blocks urllib's default UA
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.loads(r.read())
