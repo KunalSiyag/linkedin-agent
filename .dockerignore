@@ -1,0 +1,6 @@
+hermes-agent/
+profile/
+.git/
+**/__pycache__/
+*.env
+*.local

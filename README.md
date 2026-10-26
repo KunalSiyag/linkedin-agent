@@ -14,6 +14,25 @@ Nothing is posted without an explicit approval.
 
 No secrets are baked in; everything sensitive is passed as environment variables at registration.
 
+## LinkedIn studio
+
+`skills/linkedin-studio` is what makes the agent useful rather than a generic chatbot:
+
+- **Sources, not imagination:** posts start from the owner's public repos (`sources.py repo`), recent activity, or
+  notes sent in Discord. Every number in a draft must appear in its fact sheet.
+- **Guardrails, enforced twice:** `lint_post.py` blocks employer mentions, private work, job-seeking language,
+  missing sponsor disclosures, personal information, secrets and engagement bait. The written rules in
+  `references/guardrails.md` cover what a regex can't.
+- **Independent critic:** `critique.py` reviews each draft with a different GMI model than the writer.
+- **Owner approves every word:** `drafts.py` keeps every version, refuses to approve a blocked draft, and learns from
+  the owner's edits. The agent never posts, comments or reacts anywhere itself.
+- **Morning digest (08:00 IST) and weekly plan (Mon 09:00 IST)** from HN, GitHub, Hugging Face, dev.to and new GMI
+  models.
+
+The owner's private profile (employer blocklist, voice, sponsors) lives in `$LINKEDIN_HOME/profile` on the data
+volume, never in this repo; `profile.example/` shows the format. At boot `deploy/cont-init.d/04-linkedin-studio`
+pulls this repo's latest `main`, so skill changes need only a push and a restart.
+
 ## Deploy on Agentbox
 
 1. Push to `main` (or run the *Publish Agentbox image* workflow) to publish the image.
@@ -29,7 +48,7 @@ doesn't map `GMI_MAAS_API_KEY`; this image fixes both.
 ## Local smoke test
 
 ```sh
-docker build -t linkedin-agent:local deploy
+docker build -f deploy/Dockerfile -t linkedin-agent:local .
 docker run --rm -p 127.0.0.1:18080:8080 -e API_SERVER_KEY=dev -e HERMES_MODEL=deepseek-ai/DeepSeek-V4-Pro \
   -e GMI_MAAS_API_KEY=... linkedin-agent:local
 curl http://127.0.0.1:18080/health

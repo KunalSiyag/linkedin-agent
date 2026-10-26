@@ -1,0 +1,2 @@
+# Any mention blocks a draft (case-insensitive, whole word): employer, its products, clients, colleagues.
+YourEmployer

@@ -1,0 +1,56 @@
+#!/command/with-contenv sh
+# Installs the linkedin-studio skill, persona and schedules on every boot.
+# Skills come from the public repo (latest main, so updates need only a push and a restart), falling back to the
+# copy baked into the image. Personal files (profile/) are never in the repo; they live in $LINKEDIN_HOME/profile.
+set -u
+ENVDIR=/run/s6/container_environment
+HH="${HERMES_HOME:-/opt/data}"
+REPO="${LINKEDIN_AGENT_REPO:-KunalSiyag/linkedin-agent}"
+REF="${LINKEDIN_AGENT_REF:-main}"
+LIVE="$HH/linkedin-agent"
+BAKED=/opt/linkedin-agent
+LH="${LINKEDIN_HOME:-$HH/linkedin}"
+
+setenv() { [ -n "$(printenv "$1" 2>/dev/null)" ] || printf '%s' "$2" > "$ENVDIR/$1"; }
+as_hermes() { s6-setuidgid hermes env HOME="$HH" HERMES_HOME="$HH" "$@"; }
+hermes() { as_hermes /opt/hermes/.venv/bin/hermes "$@"; }
+
+setenv LINKEDIN_HOME "$LH"
+setenv GITHUB_USER "${REPO%%/*}"
+# Answer in the home channel without an @mention.
+[ -n "${DISCORD_HOME_CHANNEL:-}" ] && setenv DISCORD_FREE_RESPONSE_CHANNELS "$DISCORD_HOME_CHANNEL"
+
+if [ "${LINKEDIN_AGENT_SYNC:-true}" = "true" ]; then
+  if [ -d "$LIVE/.git" ]; then
+    as_hermes git -C "$LIVE" fetch -q --depth 1 origin "$REF" && as_hermes git -C "$LIVE" reset -q --hard FETCH_HEAD \
+      || echo "[linkedin-studio] git update failed; keeping the existing checkout"
+  else
+    as_hermes git clone -q --depth 1 --branch "$REF" "https://github.com/$REPO.git" "$LIVE" \
+      || echo "[linkedin-studio] git clone failed; using the baked copy"
+  fi
+fi
+SRC="$BAKED"
+[ -f "$LIVE/skills/linkedin-studio/SKILL.md" ] && SRC="$LIVE"
+echo "[linkedin-studio] skills from $SRC ($(as_hermes git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo baked))"
+
+as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state"
+as_hermes cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md"
+hermes config set skills.external_dirs "[\"$SRC/skills\"]" >/dev/null
+hermes config set timezone "${HERMES_TIMEZONE:-Asia/Kolkata}" >/dev/null
+[ -f "$LH/profile/blocklist.txt" ] || echo "[linkedin-studio] WARNING: $LH/profile is empty; drafts are blocked until it is set up"
+
+# Schedules (created once; edit or pause them from Discord or `hermes cron`).
+ensure_job() {  # name schedule prompt
+  if hermes cron list --all 2>/dev/null | grep -q "Name: *$1\$"; then return; fi
+  for try in 1 2 3; do
+    if out="$(hermes cron create --name "$1" --skill linkedin-studio --deliver discord "$2" "$3" 2>&1)"; then
+      echo "[linkedin-studio] cron: created $1 ($2)"; return
+    fi
+    sleep 2
+  done
+  echo "[linkedin-studio] cron: could not create $1: $(echo "$out" | grep -v WARNING | tail -n 2)"
+}
+if [ "${LINKEDIN_STUDIO_CRON:-true}" = "true" ]; then
+  ensure_job linkedin-morning-digest "0 8 * * *" "Run the linkedin-studio morning digest and post it."
+  ensure_job linkedin-weekly-plan "0 9 * * 1" "Run the linkedin-studio weekly plan: propose this week's 3 posts as angles."
+fi

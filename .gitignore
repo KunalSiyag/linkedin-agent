@@ -8,3 +8,6 @@ hermes-agent/
 
 __pycache__/
 *.pyc
+
+# Owner profile (employer, voice, sponsors) stays private; profile.example/ is the template.
+profile/

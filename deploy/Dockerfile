@@ -10,7 +10,11 @@ ENV API_SERVER_ENABLED=true \
     API_SERVER_PORT=8080 \
     HERMES_INFERENCE_PROVIDER=gmi
 
-COPY --chmod=0755 cont-init.d/03-agentbox-config /etc/cont-init.d/03-agentbox-config
+# Build context is the repo root. The studio is baked in as a fallback; at boot 04-linkedin-studio pulls the latest
+# public repo into /opt/data so skill updates need only a push and a restart.
+COPY --chmod=0755 deploy/cont-init.d/ /etc/cont-init.d/
+COPY skills/ /opt/linkedin-agent/skills/
+COPY deploy/SOUL.md /opt/linkedin-agent/deploy/SOUL.md
 
 EXPOSE 8080
 CMD ["gateway", "run"]
