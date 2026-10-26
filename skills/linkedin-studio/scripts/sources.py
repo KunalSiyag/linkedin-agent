@@ -227,9 +227,34 @@ def dev_challenges():
         name = t[9:].split("!")[0].split(":")[-1].strip().lower()
         if name and f"{name} winners" in done:
             continue
+        due = dev_due(a)
+        # DEV deadlines are 11:59 PM US Pacific; UTC-8 is the latest that can mean.
+        if due and NOW > dt.datetime.combine(due, dt.time(23, 59), dt.timezone(dt.timedelta(hours=-8))):
+            continue
         out.append({"id": f"dev:{a['id']}", "title": t, "url": a["url"], "announced": a["published_at"][:10],
-                    "tags": a["tag_list"]})
+                    "due": due.isoformat() if due else None, "tags": a["tag_list"]})
     return out
+
+
+def dev_due(article):
+    """Submission deadline date from a DEV challenge post ("**October 25:** Submissions due ..." or "Submissions Due
+    October 5" in the title); None if the post doesn't state one."""
+    try:
+        body = get(f"https://dev.to/api/articles/{article['id']}").get("body_markdown", "")
+    except Exception:
+        body = ""
+    m = (re.search(r"\*\*([A-Z][a-z]+ \d{1,2}):\*\*\s*Submissions? (?:are )?due", body)
+         or re.search(r"Submissions? Due ([A-Z][a-z]+ \d{1,2})", article["title"] + " " + body))
+    if not m:
+        return None
+    year = int(article["published_at"][:4])
+    try:
+        d = dt.datetime.strptime(f"{m.group(1)} {year}", "%B %d %Y").date()
+    except ValueError:
+        return None
+    if d < dt.date.fromisoformat(article["published_at"][:10]):  # a January deadline announced in December
+        d = d.replace(year=year + 1)
+    return d
 
 
 def cfps():
