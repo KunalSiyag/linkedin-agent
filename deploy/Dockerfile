@@ -15,6 +15,8 @@ ENV API_SERVER_ENABLED=true \
 COPY --chmod=0755 deploy/cont-init.d/ /etc/cont-init.d/
 COPY skills/ /opt/linkedin-agent/skills/
 COPY deploy/SOUL.md /opt/linkedin-agent/deploy/SOUL.md
+COPY --chmod=0755 deploy/s6-rc.d/gmi-catalog/ /etc/s6-overlay/s6-rc.d/gmi-catalog/
+RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/gmi-catalog
 
 EXPOSE 8080
 CMD ["gateway", "run"]

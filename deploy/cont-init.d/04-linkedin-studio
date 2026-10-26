@@ -37,13 +37,22 @@ as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state"
 as_hermes cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md"
 hermes config set skills.external_dirs "[\"$SRC/skills\"]" >/dev/null
 hermes config set timezone "${HERMES_TIMEZONE:-Asia/Kolkata}" >/dev/null
+# Models per role: profile/studio.json overrides the defaults. The critic runs as a delegated subagent, so
+# delegation.model is the critic; it inherits the gmi provider and credentials from the parent.
+model_for() {
+  /opt/hermes/.venv/bin/python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("models",{}).get(sys.argv[2],""))' \
+    "$LH/profile/studio.json" "$1" 2>/dev/null
+}
+CRITIC="$(model_for critic)"; CRITIC="${CRITIC:-${STUDIO_CRITIC_MODEL:-zai-org/GLM-5.3}}"
+DIGEST="$(model_for digest)"; DIGEST="${DIGEST:-${STUDIO_DIGEST_MODEL:-deepseek-ai/DeepSeek-V4-Flash}}"
+hermes config set delegation.model "$CRITIC" >/dev/null && echo "[linkedin-studio] critic (delegation.model): $CRITIC"
 [ -f "$LH/profile/blocklist.txt" ] || echo "[linkedin-studio] WARNING: $LH/profile is empty; drafts are blocked until it is set up"
 
 # Schedules (created once; edit or pause them from Discord or `hermes cron`).
-ensure_job() {  # name schedule prompt
+ensure_job() {  # name schedule prompt [model]
   if hermes cron list --all 2>/dev/null | grep -q "Name: *$1\$"; then return; fi
   for try in 1 2 3; do
-    if out="$(hermes cron create --name "$1" --skill linkedin-studio --deliver discord "$2" "$3" 2>&1)"; then
+    if out="$(hermes cron create --name "$1" --skill linkedin-studio --deliver discord ${4:+--model "$4" --provider gmi} "$2" "$3" 2>&1)"; then
       echo "[linkedin-studio] cron: created $1 ($2)"; return
     fi
     sleep 2
@@ -51,6 +60,6 @@ ensure_job() {  # name schedule prompt
   echo "[linkedin-studio] cron: could not create $1: $(echo "$out" | grep -v WARNING | tail -n 2)"
 }
 if [ "${LINKEDIN_STUDIO_CRON:-true}" = "true" ]; then
-  ensure_job linkedin-morning-digest "0 8 * * *" "Run the linkedin-studio morning digest and post it."
+  ensure_job linkedin-morning-digest "0 8 * * *" "Run the linkedin-studio morning digest and post it." "$DIGEST"
   ensure_job linkedin-weekly-plan "0 9 * * 1" "Run the linkedin-studio weekly plan: propose this week's 3 posts as angles."
 fi

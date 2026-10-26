@@ -39,10 +39,15 @@ State lives in `$LINKEDIN_HOME` (on Agentbox: `/opt/data/linkedin`): `profile/`,
 3. **Draft** the chosen angle following the playbook and voice. Save it:
    `python3 SKILL_DIR/scripts/drafts.py new --kind post --source repo:NAME --facts FACTS.md --file draft.md --title "..."`
    Fix every BLOCK the linter reports; never send a blocked draft.
-4. **Critique**: `python3 SKILL_DIR/scripts/critique.py ID`. This is a different model on GMI. Apply its fixes that
-   are right, save with `drafts.py revise ID --file ... --note "critic"`, and re-run the critic once. If the verdict
-   is still not "ship", say so to the owner instead of polishing forever. If the verdict is "reject", drop the draft
-   and explain.
+4. **Critique** by an independent reviewer (a subagent; Hermes runs it on the critic model, a different GMI model):
+   - `python3 SKILL_DIR/scripts/critique.py prepare ID` prints the path of the critic's brief.
+   - `delegate_task` with goal: "You are an independent editor. Read the file <path> and follow its instructions
+     exactly. Do not modify any files. Your final answer is only the JSON object it asks for." Give the path in
+     `context`. Don't add your own opinion of the draft to the brief.
+   - Write the subagent's JSON answer to a file and run `critique.py save ID FILE`. It enforces the verdict rules.
+   Apply the fixes that are right, save with `drafts.py revise ID --file ... --note "critic"`, and critique once more.
+   If the verdict is still not "ship", tell the owner what's left instead of polishing forever. If it's "reject",
+   drop the draft and explain why.
 5. **Send for approval** in Discord: the post text exactly as it would appear, then a short block with the critic
    scores, lint warnings, the facts used, the suggested visual, and "link in first comment" text if there's a link.
    End with: reply `approve`, send edits, or `drop`.
@@ -82,5 +87,6 @@ each as an angle. Draft only after the owner picks.
 
 ## Cost
 
-Use GMI for everything. The writer is your default model. The critic and digest run through `gmi_chat.py` with
-the models in `profile/studio.json`. Check `state/gmi_usage.jsonl` if asked about spend.
+Everything runs on GMI. You (the writer) use the default model; the critic subagent uses `delegation.model`; the
+morning digest job uses a cheaper model. All three are set from `profile/studio.json` at boot. You never need or
+handle an API key: if a step seems to need one, stop and tell the owner.

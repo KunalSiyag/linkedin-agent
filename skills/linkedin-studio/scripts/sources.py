@@ -3,7 +3,8 @@
 
   sources.py github [--days 14]          public repos of $GITHUB_USER with recent pushes
   sources.py repo NAME [--out FACTS.md]  fact sheet for one public repo (README, commits, releases)
-  sources.py digest [--out DIGEST.json]  what's new in AI/dev: HN, GitHub, Hugging Face, dev.to, GMI models
+  sources.py digest [--out DIGEST.json]  what's new in AI/dev: HN, GitHub, Hugging Face, dev.to, new GMI models
+  sources.py gmi-catalog                 refresh state/gmi_catalog.json (gmi-catalog service only; needs the key)
 
 GitHub is queried without a token on purpose: the script can only ever see public repos.
 """
@@ -138,18 +139,41 @@ def devto():
              "author": x["user"]["name"]} for x in get("https://dev.to/api/articles?top=1&tag=ai&per_page=8")]
 
 
-def gmi_models():
-    """Models on GMI right now, and which ones appeared since the last digest."""
+CATALOG = HOME / "state" / "gmi_catalog.json"
+
+
+def cmd_gmi_catalog(a):
+    """Refresh the GMI model catalog. Run by the gmi-catalog service (outside the agent), which holds the key."""
     key = os.environ.get("GMI_API_KEY") or os.environ.get("GMI_MAAS_API_KEY")
     if not key:
-        return {"error": "no GMI_API_KEY"}
-    data = get("https://api.gmi-serving.com/v1/models", {"Authorization": f"Bearer {key}"})
+        sys.exit("no GMI_API_KEY")
+    try:
+        data = get("https://api.gmi-serving.com/v1/models", {"Authorization": f"Bearer {key}"})
+    except Exception as e:
+        sys.exit(f"GMI model list failed: {e}")
     ids = sorted({m["id"] for m in data.get("data", [])})
-    snap = HOME / "state" / "gmi_models.json"
-    old = set(json.loads(snap.read_text())) if snap.exists() else None
-    snap.parent.mkdir(parents=True, exist_ok=True)
-    snap.write_text(json.dumps(ids))
-    return {"count": len(ids), "new_since_last_digest": sorted(set(ids) - old) if old is not None else [], "first_run": old is None}
+    old = json.loads(CATALOG.read_text()) if CATALOG.exists() else {}
+    today = NOW.date().isoformat()
+    seen = old.get("first_seen", {})
+    baseline = not seen
+    for i in ids:
+        seen.setdefault(i, "baseline" if baseline else today)
+    CATALOG.parent.mkdir(parents=True, exist_ok=True)
+    tmp = CATALOG.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"updated": NOW.isoformat(timespec="minutes"), "count": len(ids),
+                               "first_seen": {i: seen[i] for i in ids}}, indent=1))
+    tmp.replace(CATALOG)
+    print(f"{len(ids)} models")
+
+
+def gmi_models():
+    """Models that appeared on GMI in the last 3 days (from the catalog file; the agent never holds the key)."""
+    if not CATALOG.exists():
+        return {"error": "catalog not refreshed yet"}
+    c = json.loads(CATALOG.read_text())
+    since = (NOW - dt.timedelta(days=3)).date().isoformat()
+    return {"updated": c["updated"], "count": c["count"],
+            "new": sorted(i for i, d in c["first_seen"].items() if d != "baseline" and d >= since)}
 
 
 def cmd_digest(a):
@@ -181,8 +205,9 @@ def main():
     r.add_argument("--max-readme", type=int, default=7000)
     d = sub.add_parser("digest")
     d.add_argument("--out")
+    sub.add_parser("gmi-catalog")
     a = ap.parse_args()
-    {"github": cmd_github, "repo": cmd_repo, "digest": cmd_digest}[a.cmd](a)
+    {"github": cmd_github, "repo": cmd_repo, "digest": cmd_digest, "gmi-catalog": cmd_gmi_catalog}[a.cmd](a)
 
 
 if __name__ == "__main__":

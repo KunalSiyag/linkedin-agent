@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""One chat completion on GMI Cloud, used for the critic pass (a different model than the writer) and evals.
+"""One chat completion on GMI Cloud, for model comparisons and evals run by the owner (outside the agent).
+The agent itself never calls this: it has no access to the key. It writes with its default model and critiques
+through a delegated subagent.
 
   gmi_chat.py --role critic|writer|digest --system SYSTEM.md --user USER.md [--model ID] [--json]
   gmi_chat.py --list-models
