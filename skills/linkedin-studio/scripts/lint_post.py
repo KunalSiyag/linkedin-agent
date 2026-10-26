@@ -22,7 +22,9 @@ PROFILE = HOME / "profile"
 WORKPLACE = [
     r"\bmy (?:employer|company|manager|boss|org|organi[sz]ation|day ?job|workplace|team at)\b",
     r"\bat (?:my )?(?:work|the office)\b", r"\bour (?:client|customer)s?\b", r"\bmy (?:client|customer)s?\b",
-    r"\bconfidential\b", r"\bNDA\b", r"\binternal (?:tool|project|system|codebase|repo)\b",
+    r"\bconfidential\b", r"\bNDAs?\b", r"\binternal (?:tools?|projects?|systems?|codebases?|repos?|apps?|platforms?)\b",
+    r"\b(?:my|our) (?:colleagues?|coworkers?|co-workers?|teammates?|team lead|tech lead|org|squad)\b", r"\bat (?:my|our) (?:job|firm)\b",
+    r"\b(?:we|our team) (?:use|used|run|ran|ship|shipped|built) (?:this |it )?(?:at|in) (?:work|production)\b",
     r"\b(?:salary|appraisal|hike|layoffs?|laid off|resign(?:ed|ation)?|notice period)\b",
 ]
 # Looking for work in public reads badly to a current employer.

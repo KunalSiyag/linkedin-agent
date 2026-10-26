@@ -33,7 +33,7 @@ SRC="$BAKED"
 [ -f "$LIVE/skills/linkedin-studio/SKILL.md" ] && SRC="$LIVE"
 echo "[linkedin-studio] skills from $SRC ($(as_hermes git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo baked))"
 
-as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state"
+as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state" "$LH/tmp"
 as_hermes cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md"
 hermes config set skills.external_dirs "[\"$SRC/skills\"]" >/dev/null
 hermes config set timezone "${HERMES_TIMEZONE:-Asia/Kolkata}" >/dev/null
@@ -43,7 +43,7 @@ model_for() {
   /opt/hermes/.venv/bin/python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("models",{}).get(sys.argv[2],""))' \
     "$LH/profile/studio.json" "$1" 2>/dev/null
 }
-CRITIC="$(model_for critic)"; CRITIC="${CRITIC:-${STUDIO_CRITIC_MODEL:-zai-org/GLM-5.3}}"
+CRITIC="$(model_for critic)"; CRITIC="${CRITIC:-${STUDIO_CRITIC_MODEL:-google/gemini-3.8-flash}}"
 DIGEST="$(model_for digest)"; DIGEST="${DIGEST:-${STUDIO_DIGEST_MODEL:-deepseek-ai/DeepSeek-V4-Flash}}"
 hermes config set delegation.model "$CRITIC" >/dev/null && echo "[linkedin-studio] critic (delegation.model): $CRITIC"
 [ -f "$LH/profile/blocklist.txt" ] || echo "[linkedin-studio] WARNING: $LH/profile is empty; drafts are blocked until it is set up"

@@ -17,6 +17,8 @@ connect or message anyone on LinkedIn yourself.** The owner approves every word 
 
 `SKILL_DIR` is the directory containing this file. Scripts: `python3 SKILL_DIR/scripts/<name>.py`.
 State lives in `$LINKEDIN_HOME` (on Agentbox: `/opt/data/linkedin`): `profile/`, `drafts/`, `facts/`, `state/`.
+Put your own working files (draft text before `drafts.py new`, critic answers before `critique.py save`) in
+`$LINKEDIN_HOME/tmp/`, never inside `drafts/`. Never edit `profile/` unless the owner asks you to.
 
 ## Read first, every time
 

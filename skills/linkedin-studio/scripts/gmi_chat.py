@@ -20,7 +20,7 @@ from pathlib import Path
 
 HOME = Path(os.environ.get("LINKEDIN_HOME") or Path(os.environ.get("HERMES_HOME", "~/.hermes")).expanduser() / "linkedin")
 BASE = os.environ.get("GMI_BASE_URL", "https://api.gmi-serving.com/v1").rstrip("/")
-DEFAULTS = {"writer": "deepseek-ai/DeepSeek-V4-Pro", "critic": "zai-org/GLM-5.3", "digest": "deepseek-ai/DeepSeek-V4-Flash"}
+DEFAULTS = {"writer": "deepseek-ai/DeepSeek-V4-Pro", "critic": "google/gemini-3.8-flash", "digest": "deepseek-ai/DeepSeek-V4-Flash"}
 
 
 def key():
