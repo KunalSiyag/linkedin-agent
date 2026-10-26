@@ -267,7 +267,11 @@ def cmd_carousel(a):
     parts = [p for p in re.split(r"(?m)^\s*---\s*$", md) if p.strip()]
     if not 2 <= len(parts) <= 12:
         sys.exit(f"{len(parts)} slides; a carousel needs 2-12")
-    check(md, d)
+    # Prose gets every post rule; code blocks get the code-card rules (secrets, private terms), not prose rules
+    # like placeholders or unsourced numbers that real code trips over.
+    check(re.sub(r"```.*?```", "", md, flags=re.S), d)
+    if code := "\n".join(re.findall(r"```[^\n]*\n(.*?)```", md, flags=re.S)):
+        check(code, d, CODE_BLOCKS)
     for k, p in enumerate(parts, 1):
         if len(re.sub(r"```.*?```", "", p, flags=re.S)) > 450:
             print(f"WARN slide {k} has a lot of text; it will be shrunk to fit (aim for under ~60 words)")
