@@ -123,10 +123,11 @@ When the owner pastes comments on their own post, draft short, warm, specific re
 
 For the owner only, in Discord; never a post and never mentioned on LinkedIn.
 1. `python3 SKILL_DIR/scripts/sources.py opportunities --out $LINKEDIN_HOME/state/opportunities-$(date +%F).json`
-2. Send one message, under ~1,800 characters, best fit first, at most 6 items. Each: name, link, prize or what it
-   offers, deadline, and one line on which of the owner's public projects or skills fits it. Mark items new since
-   last week. Prefer AI, developer tools, agents, Linux and open source; skip anything that clashes with the
-   guardrails (the employer's industry, crypto trading, politics).
+2. Send one message, under ~1,800 characters: the best 4-6 items that are still open, best fit first, every time,
+   whether or not they're new (`"new": true` only adds a "new" marker; it never filters). Each: name, link, prize or
+   what it offers, deadline, and one line on which of the owner's public projects or skills fits it. Prefer AI,
+   developer tools, agents, Linux and open source; skip anything that clashes with the guardrails (the employer's
+   industry, crypto trading, politics) and anything closing in under 3 days.
    - **Hackathons** (Devpost, online or India) and **DEV challenges**: a prize, a public project, and a natural post.
    - **Talk CFPs** (online or India): visibility with hiring managers; suggest a talk title from a public project.
 3. Never invent opportunities, prizes or deadlines; everything comes from the file. If a source failed, say so.
