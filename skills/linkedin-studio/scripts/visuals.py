@@ -25,6 +25,17 @@ import sys
 import tempfile
 from pathlib import Path
 
+# Needs pygments and Pillow, which Hermes' own Python has but the agent's shell python3 may not: re-run under it.
+try:
+    import PIL  # noqa: F401
+    import pygments  # noqa: F401
+except ImportError:
+    hermes_py = "/opt/hermes/.venv/bin/python"
+    if os.path.exists(hermes_py) and not os.environ.get("STUDIO_REEXEC"):
+        os.environ["STUDIO_REEXEC"] = "1"
+        os.execv(hermes_py, [hermes_py, os.path.abspath(__file__), *sys.argv[1:]])
+    sys.exit("visuals.py needs pygments and Pillow")
+
 sys.path.insert(0, str(Path(__file__).parent))
 from lint_post import HOME, PROFILE, lint  # noqa: E402
 
