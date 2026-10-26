@@ -86,7 +86,9 @@ never say what the post couldn't.
   $LINKEDIN_HOME/tmp/snippet.rs`. Never write code for a card and present it as the owner's.
 - **Title card** (`card ID --title "first line" --sub "..."`): only when nothing better exists.
 - A 20-60 s screen recording by the owner beats all of these for a demo. Suggest one when the project is visual.
-Run `visuals.py` again after edits; files are numbered, nothing is overwritten. `visuals.py list ID` shows them.
+You can't look at images (the studio's models have no vision), so don't try to open or analyse the PNGs. `visuals.py`
+prints the text size each slide ended up at: fix any slide marked "dense" or "OVERFLOW" by cutting words or splitting
+it, then run it again. Files are numbered, nothing is overwritten; `visuals.py list ID` shows them.
 
 ## Voice notes
 

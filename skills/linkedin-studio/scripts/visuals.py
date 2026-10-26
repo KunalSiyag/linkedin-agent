@@ -61,7 +61,8 @@ def chrome():
     sys.exit("no Chromium found (set CHROME=/path/to/chrome)")
 
 
-def render(page_html, out, w, h, pdf=False):
+def render(page_html, out, w, h, pdf=False, dom=False):
+    """Render to a PNG (or a PDF), or with dom=True return the DOM after the fit script ran."""
     with tempfile.TemporaryDirectory(dir=HOME / "tmp" if (HOME / "tmp").is_dir() else None,
                                      ignore_cleanup_errors=True) as t:
         src = Path(t) / "page.html"
@@ -70,12 +71,17 @@ def render(page_html, out, w, h, pdf=False):
         args = [chrome(), "--headless", "--no-sandbox", "--disable-gpu", "--hide-scrollbars", "--no-first-run",
                 "--force-device-scale-factor=1", "--run-all-compositor-stages-before-draw",
                 "--virtual-time-budget=3000", f"--window-size={w},{h + 200}"]
-        args += [f"--print-to-pdf={out}", "--no-pdf-header-footer"] if pdf else [f"--screenshot={out}"]
+        if dom:
+            args.append("--dump-dom")
+        else:
+            args += [f"--print-to-pdf={out}", "--no-pdf-header-footer"] if pdf else [f"--screenshot={out}"]
         try:
             r = subprocess.run(args + [src.as_uri()], capture_output=True, text=True, timeout=90,
                                env={**os.environ, "HOME": t})
         except subprocess.TimeoutExpired:
             sys.exit("render timed out (Chromium hung)")
+    if dom:
+        return r.stdout
     if not Path(out).exists():
         sys.exit(f"render failed: {r.stderr[-400:]}")
     if not pdf:
@@ -83,6 +89,21 @@ def render(page_html, out, w, h, pdf=False):
         from PIL import Image
         with Image.open(out) as im:
             im.crop((0, 0, w, h)).save(out)
+
+
+def report(page_html, w, h, labels):
+    """Print the text size each slide ended up at, so the agent (which can't see images) knows if one is too dense."""
+    tags = re.findall(r'<div class="fit"[^>]*>', render(page_html, None, w, h, dom=True))
+    for label, tag in zip(labels, tags):
+        m = re.search(r"font-size: (\d+)px", tag)
+        px = int(m.group(1)) if m else 0
+        if 'data-overflow="1"' in tag:
+            note = "OVERFLOW: text is cut off; split this slide or cut words"
+        elif px < 28:
+            note = "dense: hard to read on a phone; cut words or split it"
+        else:
+            note = "ok"
+        print(f"{label}: text {px}px  {note}")
 
 
 def inline(s):
@@ -199,6 +220,7 @@ document.fonts.ready.then(() => {{
     let lo = 18, hi = f.closest('.cover, .codecard') ? 64 : 54;
     while (lo < hi) {{ const mid = Math.ceil((lo + hi) / 2); f.style.fontSize = mid + 'px'; if (over()) hi = mid - 1; else lo = mid; }}
     f.style.fontSize = lo + 'px';
+    if (over()) f.dataset.overflow = '1';
   }}
 }});
 </script></body></html>"""
@@ -253,6 +275,7 @@ def cmd_carousel(a):
     slides = [(slide_body(p), "cover" if k == 0 else "") for k, p in enumerate(parts)]
     pdf = next_name(d, "carousel", "pdf")
     render(page(slides, w, h, cfg), pdf, w, h, pdf=True)
+    report(page(slides, w, h, cfg), w, h, [f"slide {k}" for k in range(1, len(slides) + 1)])
     pngs = []
     for k, s in enumerate(slides, 1):
         out = pdf.with_name(f"{pdf.stem}-slide{k:02d}.png")
@@ -274,6 +297,7 @@ def cmd_code(a):
     inner = f'<div class="bar">{dots}{title}</div><pre class="code">{highlight(code, a.lang)}</pre>'
     out = next_name(d, "code", "png")
     render(page([(inner, "codecard")], w, h, cfg), out, w, h)
+    report(page([(inner, "codecard")], w, h, cfg), w, h, ["code card"])
     shutil.copy(a.file, out.with_suffix(".txt"))
     record(d, "code", [out], str(out.with_suffix(".txt")))
 
@@ -285,6 +309,7 @@ def cmd_card(a):
     inner = f"<h1>{inline(a.title)}</h1>" + (f"<p>{inline(a.sub)}</p>" if a.sub else "")
     out = next_name(d, "card", "png")
     render(page([(inner, "cover")], w, h, cfg), out, w, h)
+    report(page([(inner, "cover")], w, h, cfg), w, h, ["title card"])
     record(d, "card", [out], a.title)
 
 
