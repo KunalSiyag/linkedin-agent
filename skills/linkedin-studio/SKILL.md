@@ -105,7 +105,9 @@ budget (you never handle the key or the budget).
    `rubric` plus `--judge` (a model not under test) only for open-ended quality. Same prompt, temperature 0 for all.
 3. `lab.py models --match ...` for names and prices, then
    `lab.py new --title "..." --models a,b,c --tasks FILE [--judge MODEL]`. It prints the worst-case cost.
-4. `lab.py status ID` until done (usually minutes), then `lab.py results ID --facts`. The fact sheet is the only
+4. `lab.py status ID` until done (usually minutes), then `lab.py results ID --facts`. If it warns that a model was
+   cut off (hit max_tokens before answering), rerun those models with a higher `max_tokens` (up to 2000) before
+   concluding anything: a cut-off is a setting, not a failure. The fact sheet is the only
    source for the post: report what happened, including the model that failed, ties, and the limits (small sample,
    one run, one task type). Never claim a model is "best" beyond what was measured.
 5. Draft through the normal post workflow with `--facts $LINKEDIN_HOME/facts/lab-ID.md` and a chart visual. Name

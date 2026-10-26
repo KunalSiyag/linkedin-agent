@@ -147,7 +147,9 @@ def summarize(res):
         judged = [c["judge"] for c in ok if isinstance(c.get("judge"), (int, float))]
         lat = [c["latency_s"] for c in ok]
         out = sum(c["completion_tokens"] for c in ok)
-        rows.append({"model": m, "calls": len(calls), "errors": len(calls) - len(ok),
+        # Hit max_tokens before answering (usually a reasoning model thinking too long): not a wrong answer.
+        cut = sum(1 for c in ok if c.get("finish_reason") == "length")
+        rows.append({"model": m, "calls": len(calls), "errors": len(calls) - len(ok), "cut_off": cut,
                      "pass": f"{sum(c['pass'] for c in checked)}/{len(checked)}" if checked else "-",
                      "judge": round(statistics.mean(judged), 2) if judged else None,
                      "median_latency_s": round(statistics.median(lat), 1) if lat else None,
@@ -161,11 +163,17 @@ def cmd_results(a):
         sys.exit(f"{a.id} has no results yet (lab.py status {a.id})")
     res = json.loads((d / "results.json").read_text())
     rows = summarize(res)
-    head = f"{'model':45} {'pass':>6} {'judge':>6} {'median s':>9} {'out tok':>8} {'cost $':>9} {'errors':>6}"
+    head = f"{'model':45} {'pass':>6} {'judge':>6} {'median s':>9} {'out tok':>8} {'cost $':>9} {'errors':>6} {'cut off':>7}"
     lines = [head] + [f"{r['model']:45} {r['pass']:>6} {r['judge'] if r['judge'] is not None else '-':>6} "
                       f"{r['median_latency_s'] if r['median_latency_s'] is not None else '-':>9} {r['output_tokens']:>8} "
-                      f"{r['cost_usd']:>9.5f} {r['errors']:>6}" for r in rows]
+                      f"{r['cost_usd']:>9.5f} {r['errors']:>6} {r['cut_off']:>7}" for r in rows]
     print("\n".join(lines))
+    cut = [r["model"] for r in rows if r["cut_off"]]
+    if cut:
+        warn = (f"WARNING: {', '.join(cut)} hit the {res['params']['max_tokens']}-token limit before answering on some "
+                "tasks (finish_reason=length), usually because a reasoning model spent the budget thinking. Those are "
+                "not wrong answers. Rerun with a higher max_tokens before comparing pass rates.")
+        print("\n" + warn)
     if a.facts:
         f = HOME / "facts" / f"lab-{a.id}.md"
         f.parent.mkdir(parents=True, exist_ok=True)
@@ -174,7 +182,8 @@ def cmd_results(a):
               f"temperature {res['params']['temperature']}, max {res['params']['max_tokens']} output tokens.",
               f"- Judge: {res['judge'] or 'none (automatic checks only)'}.",
               "- Costs are what this run cost on the owner's account; latency is wall-clock per call from one server.",
-              "- Never name the hosting provider in a post; name the models.", "", "## Results", "", "```", *lines, "```", "",
+              "- Never name the hosting provider in a post; name the models.",
+              *([f"- {warn}"] if cut else []), "", "## Results", "", "```", *lines, "```", "",
               "## Tasks", *[f"- {t['id']}: {t['prompt'][:300]}" + (f" (check: {json.dumps(t['expect'])})" if t.get("expect") else "")
                             for t in res["tasks"]], "", "## Sample answers (first 300 characters)"]
         for c in res["calls"][:40]:
@@ -261,10 +270,13 @@ def chat(key, model, messages, params):
                 time.sleep(5)
                 continue
             raise
-    msg = r["choices"][0]["message"]
+    choice = r["choices"][0]
+    msg = choice["message"]
     u = r.get("usage") or {}
     return {"answer": msg.get("content") or "", "latency_s": round(time.monotonic() - t0, 2),
-            "prompt_tokens": u.get("prompt_tokens", 0), "completion_tokens": u.get("completion_tokens", 0)}
+            "prompt_tokens": u.get("prompt_tokens", 0), "completion_tokens": u.get("completion_tokens", 0),
+            "reasoning_tokens": (u.get("completion_tokens_details") or {}).get("reasoning_tokens", 0),
+            "finish_reason": choice.get("finish_reason")}
 
 
 def run_job(key, job, budget_left):
