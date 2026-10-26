@@ -28,6 +28,11 @@ No secrets are baked in; everything sensitive is passed as environment variables
   the owner's edits. The agent never posts, comments or reacts anywhere itself.
 - **Morning digest (08:00 IST) and weekly plan (Mon 09:00 IST)** from HN, GitHub, Hugging Face, dev.to and new GMI
   models.
+- **Visuals from real content:** `visuals.py` renders PDF carousels, code cards and title cards with the Chromium in
+  the Hermes image (fonts: Inter and JetBrains Mono, SIL OFL). Slide text and code pass the same linter as posts.
+- **Voice notes:** Discord voice messages are transcribed on the box with faster-whisper (`stt.provider: local`).
+- **Weekly opportunities (Sat 10:00 IST):** open Devpost hackathons, DEV challenges and talk CFPs (online or India),
+  sent privately to Discord.
 
 The owner's private profile (employer blocklist, voice, sponsors) lives in `$LINKEDIN_HOME/profile` on the data
 volume, never in this repo; `profile.example/` shows the format. At boot `deploy/cont-init.d/04-linkedin-studio`

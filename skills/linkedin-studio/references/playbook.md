@@ -7,9 +7,11 @@ sponsorships. Every post should make a stranger think "this person really builds
 ## Pillars (rough monthly mix)
 
 1. **Demo drops (~40%)**: one tool, shown working. Lead with what it does for the reader, then one technical detail
-   that makes it interesting. Best with a 20–60 s screen recording or a GIF. Sources: the owner's public repos.
+   that makes it interesting. Best with a 20–60 s screen recording or a GIF, else a code card of the key lines.
+   Sources: the owner's public repos.
 2. **Build breakdowns (~30%)**: one specific problem from a build and how it was solved: the bug, the dead end,
-   the fix, the number that proves it. Teaches something reusable. Sources: commit history, READMEs, the owner's notes.
+   the fix, the number that proves it. Teaches something reusable; a carousel fits it well. Sources: commit history,
+   READMEs, the owner's notes.
 3. **Tools and models, hands-on (~20%)**: trying a new model, API or tool on a real task, with honest results and
    trade-offs. Name the model or tool, never the hosting provider behind it (guardrails, section 3). This pillar is
    what sponsors look for later: proof the owner can explain a product to developers.

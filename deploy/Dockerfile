@@ -18,5 +18,10 @@ COPY deploy/SOUL.md /opt/linkedin-agent/deploy/SOUL.md
 COPY --chmod=0755 deploy/s6-rc.d/gmi-catalog/ /etc/s6-overlay/s6-rc.d/gmi-catalog/
 RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/gmi-catalog
 
+# Local speech-to-text for Discord voice notes (Hermes' stt.provider=local). Versions match Hermes' uv.lock; a newer
+# av breaks faster-whisper's decoder. The Whisper model itself downloads to the data disk on first use.
+RUN /opt/hermes/tools/uv-*/uv pip install --no-cache --python /opt/hermes/.venv/bin/python \
+      faster-whisper==1.2.1 av==18.1.0 ctranslate2==4.8.3 onnxruntime==1.31.0 tokenizers==0.23.3
+
 EXPOSE 8080
 CMD ["gateway", "run"]

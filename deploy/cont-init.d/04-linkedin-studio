@@ -46,6 +46,10 @@ model_for() {
 CRITIC="$(model_for critic)"; CRITIC="${CRITIC:-${STUDIO_CRITIC_MODEL:-google/gemini-3.8-flash}}"
 DIGEST="$(model_for digest)"; DIGEST="${DIGEST:-${STUDIO_DIGEST_MODEL:-deepseek-ai/DeepSeek-V4-Flash}}"
 hermes config set delegation.model "$CRITIC" >/dev/null && echo "[linkedin-studio] critic (delegation.model): $CRITIC"
+# Voice notes in Discord are transcribed locally (free, nothing leaves the box); the model unloads after 5 idle minutes.
+hermes config set stt.provider local >/dev/null
+hermes config set stt.local.model "${STUDIO_STT_MODEL:-small}" >/dev/null
+hermes config set stt.local.unload_after_idle_seconds 300 >/dev/null
 [ -f "$LH/profile/blocklist.txt" ] || echo "[linkedin-studio] WARNING: $LH/profile is empty; drafts are blocked until it is set up"
 
 # Schedules (created once; edit or pause them from Discord or `hermes cron`).
@@ -62,4 +66,5 @@ ensure_job() {  # name schedule prompt [model]
 if [ "${LINKEDIN_STUDIO_CRON:-true}" = "true" ]; then
   ensure_job linkedin-morning-digest "0 8 * * *" "Run the linkedin-studio morning digest and post it." "$DIGEST"
   ensure_job linkedin-weekly-plan "0 9 * * 1" "Run the linkedin-studio weekly plan: propose this week's 3 posts as angles."
+  ensure_job linkedin-opportunities "0 10 * * 6" "Run the linkedin-studio weekly opportunities list and post it." "$DIGEST"
 fi

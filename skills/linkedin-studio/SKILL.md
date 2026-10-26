@@ -1,6 +1,6 @@
 ---
 name: linkedin-studio
-description: "Owner's LinkedIn studio: post and comment drafts from real public work, strict career guardrails, independent critic, morning digest. Use for anything about LinkedIn posts, comments, ideas or the digest."
+description: "Owner's LinkedIn studio: post and comment drafts from real public work, strict career guardrails, independent critic, visuals (carousels, code cards), voice-note ideas, morning digest, weekly opportunities. Use for anything about LinkedIn posts, comments, ideas, visuals, voice notes, the digest or opportunities."
 version: 1.0.0
 author: KunalSiyag
 license: MIT
@@ -34,7 +34,8 @@ Put your own working files (draft text before `drafts.py new`, critic answers be
 1. **Source.** Every post starts from something real:
    - a public repo: `python3 SKILL_DIR/scripts/sources.py repo NAME --out $LINKEDIN_HOME/facts/NAME.md`
    - recent activity: `python3 SKILL_DIR/scripts/sources.py github --days 14`
-   - what the owner tells you in Discord: write it to `$LINKEDIN_HOME/facts/<slug>.md` in their words, with the date.
+   - what the owner tells you in Discord, typed or as a voice note: write it to `$LINKEDIN_HOME/facts/<slug>.md` in
+     their words, with the date (see Voice notes).
    No source, no post. Don't use anything private, and nothing from the owner's job.
 2. **Angles.** Offer 3 angles in one short message: pillar, the first line, who it's for, what the reader learns,
    and what visual would carry it (screen recording, screenshot, diagram). Wait for the owner to pick or redirect.
@@ -52,14 +53,41 @@ Put your own working files (draft text before `drafts.py new`, critic answers be
    Apply the fixes that are right, save with `drafts.py revise ID --file ... --note "critic"`, and critique once more.
    If the verdict is still not "ship", tell the owner what's left instead of polishing forever. If it's "reject",
    drop the draft and explain why.
-5. **Send for approval** in Discord: the post text exactly as it would appear, then a short block with the critic
-   scores, lint warnings, the facts used, the suggested visual, and "link in first comment" text if there's a link.
-   End with: reply `approve`, send edits, or `drop`.
-6. **Owner edits**: if the owner sends a changed version, save it with `drafts.py revise ID --file ... --by owner`,
-   re-lint, and show the final text again.
-7. **Approve** only when the owner explicitly says approve for that draft: `drafts.py approve ID`. It refuses if lint
-   blocks. Then give the final text in a code block for copy-paste, plus the first-comment text.
-8. When the owner says it's posted, `drafts.py posted ID --url URL`.
+5. **Visual.** Make the one that fits the post (see Visuals). Skip it for short posts the owner will pair with their
+   own screen recording, and say so.
+6. **Send for approval** in Discord: the post text exactly as it would appear, the visual as `MEDIA:` attachments
+   (for a carousel, the cover PNG plus the PDF), then a short block with the critic scores, lint warnings, the facts
+   used, and "link in first comment" text if there's a link. End with: reply `approve`, send edits, or `drop`.
+7. **Owner edits**: if the owner sends a changed version, save it with `drafts.py revise ID --file ... --by owner`,
+   re-lint, and show the final text again. If the change affects the visual, re-render it.
+8. **Approve** only when the owner explicitly says approve for that draft: `drafts.py approve ID`. It refuses if lint
+   blocks. Then give the final text in a code block for copy-paste, the first-comment text, and the visual files
+   again as `MEDIA:` attachments so the owner can upload them.
+9. When the owner says it's posted, `drafts.py posted ID --url URL`.
+
+## Visuals
+
+`python3 SKILL_DIR/scripts/visuals.py` renders from real content only: no AI-generated images, no stock art.
+Every word on a visual passes the same linter as the post (numbers must be in the draft's facts), so a visual can
+never say what the post couldn't.
+- **Carousel** (`carousel ID --file slides.md`, saved in `$LINKEDIN_HOME/tmp/`): best for build breakdowns and
+  "how it works" posts. 4-8 slides, under ~40 words each. Slide 1 is the hook as a title plus one line; then one idea
+  per slide (the problem, the dead end, the trick with at most ~8 lines of real code, the result); last slide says
+  where the code is. LinkedIn shows it as a swipeable document; the owner uploads the PDF.
+- **Code card** (`code ID --file snippet --lang rust --title path/in/repo.rs`): best for demo drops. Only code copied
+  from the owner's public repo (fetch it with the fact sheet or the GitHub API), 5-20 lines, trimmed to the lines that
+  make the point. Never write code for a card and present it as the owner's.
+- **Title card** (`card ID --title "first line" --sub "..."`): only when nothing better exists.
+- A 20-60 s screen recording by the owner beats all of these for a demo. Suggest one when the project is visual.
+Run `visuals.py` again after edits; files are numbered, nothing is overwritten. `visuals.py list ID` shows them.
+
+## Voice notes
+
+The owner can send a Discord voice message instead of typing. Hermes transcribes it locally before you see it, so
+it arrives as text. Treat it as the owner's own notes: fix obvious transcription errors only where you're sure (repo
+names, tool names), write them to `$LINKEDIN_HOME/facts/<slug>.md` with the date and "(voice note)", then reply with
+what you understood in 2-3 lines and 2-3 post angles. If something in it touches the guardrails (the day job,
+anything private), leave it out of the facts file and say why.
 
 ## Comment drafts
 
@@ -84,6 +112,18 @@ When the owner pastes comments on their own post, draft short, warm, specific re
    - **Join the conversation** (2–3): public threads (HN, dev.to, GitHub) where the owner has something specific to add.
    - Today's queue: drafts waiting for approval (`drafts.py list --status draft`).
 3. Never invent items; everything comes from the digest file.
+
+## Opportunities (cron, Saturday 10:00 IST)
+
+For the owner only, in Discord; never a post and never mentioned on LinkedIn.
+1. `python3 SKILL_DIR/scripts/sources.py opportunities --out $LINKEDIN_HOME/state/opportunities-$(date +%F).json`
+2. Send one message, under ~1,800 characters, best fit first, at most 6 items. Each: name, link, prize or what it
+   offers, deadline, and one line on which of the owner's public projects or skills fits it. Mark items new since
+   last week. Prefer AI, developer tools, agents, Linux and open source; skip anything that clashes with the
+   guardrails (the employer's industry, crypto trading, politics).
+   - **Hackathons** (Devpost, online or India) and **DEV challenges**: a prize, a public project, and a natural post.
+   - **Talk CFPs** (online or India): visibility with hiring managers; suggest a talk title from a public project.
+3. Never invent opportunities, prizes or deadlines; everything comes from the file. If a source failed, say so.
 
 ## Weekly (cron, Monday 09:00 IST)
 

@@ -4,6 +4,7 @@
   sources.py github [--days 14]          public repos of $GITHUB_USER with recent pushes
   sources.py repo NAME [--out FACTS.md]  fact sheet for one public repo (README, commits, releases)
   sources.py digest [--out DIGEST.json]  what's new in AI/dev: HN, GitHub, Hugging Face, dev.to, new GMI models
+  sources.py opportunities [--out F]     open hackathons (Devpost), DEV challenges, talk CFPs (India or online)
   sources.py gmi-catalog                 refresh state/gmi_catalog.json (gmi-catalog service only; needs the key)
 
 GitHub is queried without a token on purpose: the script can only ever see public repos.
@@ -176,6 +177,86 @@ def gmi_models():
             "new": sorted(i for i, d in c["first_seen"].items() if d != "baseline" and d >= since)}
 
 
+CFP_TOPICS = ["general", "javascript", "typescript", "python", "devops", "data", "opensource", "api", "sre", "security"]
+SEEN = HOME / "state" / "opportunities_seen.json"
+
+
+def devpost():
+    """Open Devpost hackathons that are online or in India, biggest prize first."""
+    out = []
+    for page in (1, 2):
+        d = get(f"https://devpost.com/api/hackathons?status[]=open&order_by=prize-amount&per_page=40&page={page}")
+        for h in d.get("hackathons", []):
+            loc = (h.get("displayed_location") or {}).get("location", "")
+            if h.get("invite_only") or not ("online" in loc.lower() or "india" in loc.lower()):
+                continue
+            out.append({"id": f"devpost:{h['id']}", "title": h["title"], "url": h["url"], "where": loc,
+                        "prize": re.sub(r"<[^>]+>", "", h.get("prize_amount") or ""), "dates": h.get("submission_period_dates"),
+                        "left": h.get("time_left_to_submission"), "themes": [t["name"] for t in h.get("themes", [])],
+                        "registrations": h.get("registrations_count"), "by": h.get("organization_name")})
+    return out[:15]
+
+
+def dev_challenges():
+    """DEV challenges the DEV team announced in the last 30 days whose winners aren't out yet."""
+    since = (NOW - dt.timedelta(days=30)).isoformat()
+    posts = get("https://dev.to/api/articles?username=devteam&per_page=60")
+    done = " ".join(x["title"].lower() for x in posts if x["title"].lower().startswith("congrats"))
+    out = []
+    for a in posts:
+        t = a["title"]
+        if a["published_at"] < since or not t.lower().startswith("join the "):
+            continue
+        # "Join the X Challenge: Side Hustle! $2,550 ..." -> "side hustle"; winners posts may add "Week 2" to X
+        name = t[9:].split("!")[0].split(":")[-1].strip().lower()
+        if name and f"{name} winners" in done:
+            continue
+        out.append({"id": f"dev:{a['id']}", "title": t, "url": a["url"], "announced": a["published_at"][:10],
+                    "tags": a["tag_list"]})
+    return out
+
+
+def cfps():
+    """Conference talk CFPs still open, in India or online (confs.tech open data)."""
+    today, out = NOW.date().isoformat(), {}
+    for year in (NOW.year, NOW.year + 1):
+        for t in CFP_TOPICS:
+            try:
+                rows = get(f"https://raw.githubusercontent.com/tech-conferences/conference-data/main/conferences/{year}/{t}.json")
+            except Exception:
+                continue
+            for c in rows:
+                if not c.get("cfpUrl") or (c.get("cfpEndDate") or "") < today:
+                    continue
+                if not (c.get("online") or c.get("country") == "India"):
+                    continue
+                key = f"cfp:{c['name']}:{c['startDate']}"
+                out.setdefault(key, {"id": key, "name": c["name"], "url": c.get("url"), "cfp": c["cfpUrl"],
+                                     "cfp_closes": c["cfpEndDate"], "dates": f"{c['startDate']}..{c.get('endDate', '')}",
+                                     "where": "online" if c.get("online") else f"{c.get('city')}, India", "topics": []})
+                out[key]["topics"].append(t)
+    return sorted(out.values(), key=lambda c: c["cfp_closes"])[:20]
+
+
+def cmd_opportunities(a):
+    d = {"generated": NOW.isoformat(timespec="minutes"), "hackathons": safe(devpost),
+         "dev_challenges": safe(dev_challenges), "cfps": safe(cfps)}
+    seen = json.loads(SEEN.read_text()) if SEEN.exists() else {}
+    for rows in d.values():
+        for r in rows if isinstance(rows, list) else []:
+            r["new"] = r["id"] not in seen
+            seen.setdefault(r["id"], NOW.date().isoformat())
+    SEEN.parent.mkdir(parents=True, exist_ok=True)
+    SEEN.write_text(json.dumps(seen, indent=1))
+    s = json.dumps(d, indent=1, ensure_ascii=False)
+    if a.out:
+        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(a.out).write_text(s, encoding="utf-8")
+        print(a.out)
+    else:
+        print(s)
+
+
 def cmd_digest(a):
     d = {"generated": NOW.isoformat(timespec="minutes"), "hn": safe(hn), "github_new": safe(gh_trending),
          "hf_trending_models": safe(hf_models), "hf_papers": safe(hf_papers), "devto_ai": safe(devto), "gmi": safe(gmi_models)}
@@ -205,9 +286,11 @@ def main():
     r.add_argument("--max-readme", type=int, default=7000)
     d = sub.add_parser("digest")
     d.add_argument("--out")
+    sub.add_parser("opportunities").add_argument("--out")
     sub.add_parser("gmi-catalog")
     a = ap.parse_args()
-    {"github": cmd_github, "repo": cmd_repo, "digest": cmd_digest, "gmi-catalog": cmd_gmi_catalog}[a.cmd](a)
+    {"github": cmd_github, "repo": cmd_repo, "digest": cmd_digest, "opportunities": cmd_opportunities,
+     "gmi-catalog": cmd_gmi_catalog}[a.cmd](a)
 
 
 if __name__ == "__main__":
