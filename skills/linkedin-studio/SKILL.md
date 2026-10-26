@@ -78,6 +78,7 @@ When the owner pastes comments on their own post, draft short, warm, specific re
    - **Worth knowing** (3): the most useful items for an AI/dev-tools builder, one line each with the link and why
      it matters to the owner's work. Skip hype and anything that touches the guardrails.
    - **New on GMI**: models that appeared on GMI since the last digest, and whether one is worth a hands-on post.
+     This section is for the owner only: a post about the model never names GMI (guardrails, section 3).
    - **Post ideas** (2): one from the owner's own recent public activity, one hands-on reaction to today's news that
      the owner could actually build or test. Each with a first line.
    - **Join the conversation** (2–3): public threads (HN, dev.to, GitHub) where the owner has something specific to add.

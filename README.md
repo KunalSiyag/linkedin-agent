@@ -21,8 +21,8 @@ No secrets are baked in; everything sensitive is passed as environment variables
 - **Sources, not imagination:** posts start from the owner's public repos (`sources.py repo`), recent activity, or
   notes sent in Discord. Every number in a draft must appear in its fact sheet.
 - **Guardrails, enforced twice:** `lint_post.py` blocks employer mentions, private work, job-seeking language,
-  missing sponsor disclosures, personal information, secrets and engagement bait. The written rules in
-  `references/guardrails.md` cover what a regex can't.
+  brand relationships the owner keeps off LinkedIn, personal information, secrets and engagement bait. The written
+  rules in `references/guardrails.md` cover what a regex can't.
 - **Independent critic:** `critique.py` reviews each draft with a different GMI model than the writer.
 - **Owner approves every word:** `drafts.py` keeps every version, refuses to approve a blocked draft, and learns from
   the owner's edits. The agent never posts, comments or reacts anywhere itself.

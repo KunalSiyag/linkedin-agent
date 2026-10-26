@@ -26,12 +26,16 @@ Never weaken, skip or work around a check. If a check is wrong, tell the owner; 
 - "I built" only for the owner's own repos. Others' work is credited by name.
 - No fake stories: no invented conversations, "a junior asked me", "my manager told me", customer anecdotes.
 
-## 3. Sponsors and disclosure
+## 3. Brand relationships stay off LinkedIn
 
-- Anything involving a brand in `profile/sponsors.txt` (GMI Cloud: the owner is a GMI Cloud ambassador) must say so
-  plainly in the post, e.g. "(I'm a GMI Cloud ambassador.)". India's ASCI rules require disclosing material connections.
-- Honest about sponsors too: say what was hard or missing. Praise that reads like an ad hurts the owner and the sponsor.
-- Paid promotions later follow the same rule plus "#ad" or "Paid partnership" in the first two lines.
+- Never name, link, tag or hint at a brand in `profile/never_name.txt`, in posts or comments. The owner has a
+  relationship with these brands (ambassador programs, credits, perks) that they don't put on LinkedIn.
+- Because it isn't disclosed, it can't be promoted either: praising a brand you have an undisclosed connection with
+  breaks India's ASCI rules and LinkedIn's branded-content policy. So write about the model, technique or result, never
+  the provider: "DeepSeek V4 behind an OpenAI-compatible endpoint", "a hosted container", not the company.
+- Never mention ambassador programs, free credits, referral codes or perks of any kind.
+- Paid sponsorships are a later, separate decision the owner makes explicitly. Only then does a brand go into
+  `profile/sponsors.txt`, and those posts carry "#ad" or "Paid partnership" in the first two lines.
 
 ## 4. Tone and topics
 

@@ -11,8 +11,8 @@ sponsorships. Every post should make a stranger think "this person really builds
 2. **Build breakdowns (~30%)**: one specific problem from a build and how it was solved: the bug, the dead end,
    the fix, the number that proves it. Teaches something reusable. Sources: commit history, READMEs, the owner's notes.
 3. **Tools and models, hands-on (~20%)**: trying a new model, API or tool on a real task, with honest results and
-   trade-offs. GMI Cloud models fit here (with the ambassador disclosure). This pillar is what sponsors look for:
-   proof the owner can explain a product to developers.
+   trade-offs. Name the model or tool, never the hosting provider behind it (guardrails, section 3). This pillar is
+   what sponsors look for later: proof the owner can explain a product to developers.
 4. **Milestones and community (~10%)**: prizes, hackathons, releases, open-source contributions, thanking people
    by name. Short, factual, and about what was learned, never just "I won".
 
@@ -52,4 +52,4 @@ sponsorships. Every post should make a stranger think "this person really builds
 - Track what works: the owner pastes weekly post stats; the agent keeps `state/stats.jsonl` and says which pillars and
   hooks perform, with the actual numbers.
 - Sponsors look for a steady posting history, real engagement from developers, and honest product posts.
-  Never accept or draft a paid post without the owner's explicit decision; disclose every one.
+  Never accept or draft a paid post without the owner's explicit decision; once there is one, it is disclosed.

@@ -7,7 +7,7 @@ You get: GUARDRAILS, the VOICE notes, the FACT SHEET (the only allowed source of
 Score each criterion 1–5 (5 = nothing to fix):
 - specific: concrete nouns, real names, numbers from the fact sheet; no vague claims ("powerful", "seamless", "a lot").
 - truthful: every claim is supported by the fact sheet; nothing exaggerated, rounded up, or implied beyond it.
-- safe: obeys every guardrail (employer, private work, soliciting, disclosure, tone, personal info). Any violation = 1.
+- safe: obeys every guardrail (employer, private work, soliciting, brand relationships, tone, personal info). Any violation = 1.
 - hook: the first line tells a developer what this is and why they should care, under ~140 characters, no teaser.
 - value: a reader learns one concrete thing (how something works, a trade-off, a fix) even without clicking anything.
 - voice: matches the VOICE notes; reads like a person explaining their work, not like marketing or a template.

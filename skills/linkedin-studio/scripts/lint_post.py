@@ -6,7 +6,8 @@ Usage: lint_post.py DRAFT.md [--facts FACTS.md] [--kind post|comment] [--json]
 BLOCK findings stop the draft; WARN findings go to the critic. Exit code 1 on any BLOCK.
 Private terms (employer, clients, sponsors) come from the profile directory, never from this file:
   $LINKEDIN_HOME/profile/blocklist.txt   one term per line; any mention blocks the draft
-  $LINKEDIN_HOME/profile/sponsors.txt    "Brand | disclosure phrase, other phrase" per line
+  $LINKEDIN_HOME/profile/never_name.txt  brands and relationships never named on LinkedIn; any mention blocks the draft
+  $LINKEDIN_HOME/profile/sponsors.txt    paid partners only: "Brand | disclosure phrase, other phrase" per line
 """
 import argparse
 import json
@@ -107,6 +108,9 @@ def lint(text, kind="post", facts=None):
     for term in load_lines(PROFILE / "blocklist.txt"):
         if re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", body, re.I):
             add("BLOCK", "blocklist", f"mentions a private term from the blocklist: {term!r}")
+    for term in load_lines(PROFILE / "never_name.txt"):
+        if re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", body, re.I):
+            add("BLOCK", "never-name", f"names a brand or relationship the owner keeps off LinkedIn: {term!r}")
     if h := find(WORKPLACE, body):
         add("BLOCK", "workplace", "talks about an employer, clients or private work", h)
     if h := find(SOLICIT, body):

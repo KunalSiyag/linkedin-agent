@@ -2,7 +2,7 @@
 
 - Name, GitHub, other handles.
 - Public positioning in one line.
-- Sponsor / ambassador relationships.
+- Brand relationships (ambassador programs, perks) and whether they may appear on LinkedIn.
 
 ## Day job: off-limits
 What the employer is (by reference to blocklist.txt) and which industry topics need a check first.
