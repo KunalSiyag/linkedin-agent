@@ -36,10 +36,16 @@ SRC="$BAKED"
 [ -f "$LIVE/skills/linkedin-studio/SKILL.md" ] && SRC="$LIVE"
 echo "[linkedin-studio] skills from $SRC ($(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo baked))"
 
-as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state" "$LH/tmp"
+as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state" "$LH/tmp" "$LH/hackathons"
+# Model lab: the agent queues jobs; only gmilab (the gmi-lab service) writes results, prices and the spend ledger.
+mkdir -p "$LH/lab/queue" "$LH/lab/results" "$LH/lab/shared" "$LH/lab/state"
+chown root:root "$LH/lab" && chmod 755 "$LH/lab"
+chown hermes:hermes "$LH/lab/queue"
+id gmilab >/dev/null 2>&1 && chown -R gmilab:gmilab "$LH/lab/results" "$LH/lab/shared" "$LH/lab/state"
+chmod 755 "$LH/lab/queue" "$LH/lab/results" "$LH/lab/shared" "$LH/lab/state"
 cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md" && chown root:root "$HH/SOUL.md" && chmod 644 "$HH/SOUL.md"
 # The guardrail lists are root-owned too: change them from the console, not through the agent.
-for f in blocklist.txt never_name.txt sponsors.txt; do
+for f in blocklist.txt never_name.txt sponsors.txt studio.json; do
   [ -f "$LH/profile/$f" ] && chown root:root "$LH/profile/$f" && chmod 644 "$LH/profile/$f"
 done
 hermes config set skills.external_dirs "[\"$SRC/skills\"]" >/dev/null

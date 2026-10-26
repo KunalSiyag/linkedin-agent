@@ -15,8 +15,10 @@ ENV API_SERVER_ENABLED=true \
 COPY --chmod=0755 deploy/cont-init.d/ /etc/cont-init.d/
 COPY skills/ /opt/linkedin-agent/skills/
 COPY deploy/SOUL.md /opt/linkedin-agent/deploy/SOUL.md
-COPY --chmod=0755 deploy/s6-rc.d/gmi-catalog/ /etc/s6-overlay/s6-rc.d/gmi-catalog/
-RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/gmi-catalog
+# gmi-lab runs model experiments and refreshes the catalog as its own user, the only one holding the GMI key.
+RUN useradd --system --no-create-home --shell /usr/sbin/nologin gmilab
+COPY --chmod=0755 deploy/s6-rc.d/gmi-lab/ /etc/s6-overlay/s6-rc.d/gmi-lab/
+RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/gmi-lab
 
 # Local speech-to-text for Discord voice notes (Hermes' stt.provider=local). Versions match Hermes' uv.lock; a newer
 # av breaks faster-whisper's decoder. The Whisper model itself downloads to the data disk on first use.

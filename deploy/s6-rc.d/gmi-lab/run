@@ -1,0 +1,7 @@
+#!/command/with-contenv sh
+# Model lab + GMI catalog (lab.py serve). Runs as the gmilab user, which is the only one holding the GMI key:
+# the agent (user hermes) can't read this process's environment, and the script is the image's root-owned copy,
+# so the agent can't change what runs with the key or raise the budget (profile/studio.json is root-owned too).
+LH="${LINKEDIN_HOME:-${HERMES_HOME:-/opt/data}/linkedin}"
+exec s6-setuidgid gmilab env HOME=/tmp LINKEDIN_HOME="$LH" /opt/hermes/.venv/bin/python -u \
+  /opt/linkedin-agent/skills/linkedin-studio/scripts/lab.py serve 2>&1

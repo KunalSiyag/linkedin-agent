@@ -84,11 +84,32 @@ never say what the post couldn't.
   the owner's public repo: find it with `sources.py tree NAME --match cursor`, read it with `sources.py file NAME PATH`,
   then save the 5-20 lines that make the point with `sources.py file NAME PATH --lines 40-58 --out
   $LINKEDIN_HOME/tmp/snippet.rs`. Never write code for a card and present it as the owner's.
+- **Chart** (`chart ID --file data.json`): bars for test-drive results (speed, cost, pass rate). Values come straight
+  from the lab fact sheet; the title states what was measured, not a verdict.
 - **Title card** (`card ID --title "first line" --sub "..."`): only when nothing better exists.
 - A 20-60 s screen recording by the owner beats all of these for a demo. Suggest one when the project is visual.
 You can't look at images (the studio's models have no vision), so don't try to open or analyse the PNGs. `visuals.py`
 prints the text size each slide ended up at: fix any slide marked "dense" or "OVERFLOW" by cutting words or splitting
 it, then run it again. Files are numbered, nothing is overwritten; `visuals.py list ID` shows them.
+
+## Model test-drives
+
+Real experiments on real tasks are the best posts in the "tools and models, hands-on" pillar: nobody else has the
+numbers. `python3 SKILL_DIR/scripts/lab.py` queues them; a separate service runs them on GMI within the owner's daily
+budget (you never handle the key or the budget).
+1. **Pick a question** a developer would actually ask, tied to the owner's work: "which model reviews a Rust diff
+   best", "which one extracts fields from a messy README", "is the small model good enough for commit messages".
+   Ideas also come from the digest's new models. Propose it to the owner with the models and the cost estimate first.
+2. **Design** 5-15 tasks in `$LINKEDIN_HOME/tmp/<name>-tasks.json`, from public material only (the owner's public
+   repos via `sources.py file`, public docs). Give each task an `expect` check when there is a right answer; add a
+   `rubric` plus `--judge` (a model not under test) only for open-ended quality. Same prompt, temperature 0 for all.
+3. `lab.py models --match ...` for names and prices, then
+   `lab.py new --title "..." --models a,b,c --tasks FILE [--judge MODEL]`. It prints the worst-case cost.
+4. `lab.py status ID` until done (usually minutes), then `lab.py results ID --facts`. The fact sheet is the only
+   source for the post: report what happened, including the model that failed, ties, and the limits (small sample,
+   one run, one task type). Never claim a model is "best" beyond what was measured.
+5. Draft through the normal post workflow with `--facts $LINKEDIN_HOME/facts/lab-ID.md` and a chart visual. Name
+   the models; never name the hosting provider.
 
 ## Voice notes
 
@@ -120,6 +141,7 @@ When the owner pastes comments on their own post, draft short, warm, specific re
      the owner could actually build or test. Each with a first line.
    - **Join the conversation** (2–3): public threads (HN, dev.to, GitHub) where the owner has something specific to add.
    - Today's queue: drafts waiting for approval (`drafts.py list --status draft`).
+   - Hackathon deadlines: `python3 SKILL_DIR/../hackathon-copilot/scripts/hackathons.py due` (skip if none).
 3. Never invent items; everything comes from the digest file.
 
 ## Opportunities (cron, Saturday 10:00 IST)
@@ -134,6 +156,7 @@ For the owner only, in Discord; never a post and never mentioned on LinkedIn.
    - **Hackathons** (Devpost, online or India) and **DEV challenges**: a prize, a public project, and a natural post.
    - **Talk CFPs** (online or India): visibility with hiring managers; suggest a talk title from a public project.
 3. Never invent opportunities, prizes or deadlines; everything comes from the file. If a source failed, say so.
+4. When the owner picks one, switch to the hackathon-copilot skill.
 
 ## Weekly (cron, Monday 09:00 IST)
 
@@ -143,5 +166,7 @@ each as an angle. Draft only after the owner picks.
 ## Cost
 
 Everything runs on GMI. You (the writer) use the default model; the critic subagent uses `delegation.model`; the
-morning digest job uses a cheaper model. All three are set from `profile/studio.json` at boot. You never need or
+morning digest job uses a cheaper model. All three are set from `profile/studio.json` at boot. Test-drives run in
+the gmi-lab service under a daily budget from `profile/studio.json` ("lab": {"daily_usd": ...}); `lab.py status`
+shows today's spend. You never need or
 handle an API key: if a step seems to need one, stop and tell the owner.

@@ -7,5 +7,11 @@
  "visuals": {
   "footer": "Your Name  ·  github.com/you",
   "accent": "#7cc4ff"
+ },
+ "lab": {
+  "daily_usd": 1.0,
+  "max_models": 8,
+  "max_tasks": 20,
+  "max_tokens": 2000
  }
 }

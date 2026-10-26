@@ -4,6 +4,9 @@
   visuals.py carousel ID --file SLIDES.md     PDF carousel (LinkedIn "document" post) + a PNG per slide
   visuals.py code ID --file SNIPPET --lang L [--title T] [--size square|portrait|landscape]   code card PNG
   visuals.py card ID --title HOOK [--sub LINE] [--size ...]                                    title card PNG
+  visuals.py chart ID --file DATA.json [--size ...]       bar chart PNG, e.g. model test-drive results
+    DATA.json: {"title": "...", "unit": "s", "better": "lower"|"higher", "note": "...",
+                "rows": [{"label": "model-a", "value": 12.3}, ...]}   (2-10 rows; values must be in the facts)
   visuals.py list ID
 
 SLIDES.md: slides separated by a line "---". Per slide: "# Title", "## Subtitle", paragraphs, "- bullets",
@@ -317,6 +320,37 @@ def cmd_card(a):
     record(d, "card", [out], a.title)
 
 
+def cmd_chart(a):
+    d = draft_dir(a.id)
+    spec = json.loads(Path(a.file).read_text(encoding="utf-8"))
+    rows = spec.get("rows", [])
+    if not 2 <= len(rows) <= 10 or not all(isinstance(r.get("value"), (int, float)) for r in rows):
+        sys.exit("chart needs 2-10 rows, each with a label and a numeric value")
+    unit, better = spec.get("unit", ""), spec.get("better", "higher")
+    fmt = lambda v: f"{v:g}{(' ' + unit) if unit and unit not in ('%',) else unit}"
+    check("\n".join([spec.get("title", ""), spec.get("note", "")] + [f"{r['label']} {fmt(r['value'])}" for r in rows]), d)
+    rows = sorted(rows, key=lambda r: r["value"], reverse=(better != "lower"))
+    top = max(r["value"] for r in rows) or 1
+    bars = "".join(
+        f'<div class="row"><div class="lab">{html.escape(str(r["label"]))}</div><div class="track"><div class="bar{" best" if k == 0 else ""}" '
+        f'style="width:{max(2, 100 * r["value"] / top):.1f}%"></div></div><div class="val">{html.escape(fmt(r["value"]))}</div></div>'
+        for k, r in enumerate(rows))
+    note = f"<p class=\"note\">{inline(spec['note'])}</p>" if spec.get("note") else ""
+    inner = (f"<h1>{inline(spec.get('title', ''))}</h1><div class=\"chart\">{bars}</div>{note}"
+             "<style>.chart{display:flex;flex-direction:column;gap:.55em;font-size:.62em}.row{display:grid;"
+             "grid-template-columns:38% 1fr auto;align-items:center;gap:.6em}.lab{font-family:JBM,monospace;color:#c9d1db;"
+             "overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.track{background:#1c212b;border-radius:8px;height:1.1em}"
+             ".bar{height:100%;border-radius:8px;background:#3b4b5e}.bar.best{background:var(--accent)}.val{font-weight:650;"
+             "font-variant-numeric:tabular-nums}.note{font-size:.55em;color:#8b949e}</style>")
+    cfg, (w, h) = settings(), SIZES[a.size]
+    html_page = page([(inner, "")], w, h, cfg).replace("<style>", f"<style>:root{{--accent:{cfg['accent']}}}", 1)
+    out = next_name(d, "chart", "png")
+    render(html_page, out, w, h)
+    report(html_page, w, h, ["chart"])
+    shutil.copy(a.file, out.with_suffix(".json"))
+    record(d, "chart", [out], str(out.with_suffix(".json")))
+
+
 def cmd_list(a):
     d = draft_dir(a.id)
     meta = json.loads((d / "meta.json").read_text())
@@ -343,9 +377,13 @@ def main():
     t.add_argument("--title", required=True)
     t.add_argument("--sub")
     t.add_argument("--size", choices=SIZES, default="portrait")
+    ch = sub.add_parser("chart")
+    ch.add_argument("id")
+    ch.add_argument("--file", required=True)
+    ch.add_argument("--size", choices=SIZES, default="square")
     sub.add_parser("list").add_argument("id")
     a = ap.parse_args()
-    {"carousel": cmd_carousel, "code": cmd_code, "card": cmd_card, "list": cmd_list}[a.cmd](a)
+    {"carousel": cmd_carousel, "code": cmd_code, "card": cmd_card, "chart": cmd_chart, "list": cmd_list}[a.cmd](a)
 
 
 if __name__ == "__main__":

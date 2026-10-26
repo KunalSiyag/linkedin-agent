@@ -7,7 +7,6 @@
   sources.py file NAME PATH [--lines 10-40] [--out F]   one file (or a line range) from a public repo
   sources.py digest [--out DIGEST.json]  what's new in AI/dev: HN, GitHub, Hugging Face, dev.to, new GMI models
   sources.py opportunities [--out F]     open hackathons (Devpost), DEV challenges, talk CFPs (India or online)
-  sources.py gmi-catalog                 refresh state/gmi_catalog.json (gmi-catalog service only; needs the key)
 
 GitHub is queried without a token on purpose: the script can only ever see public repos.
 """
@@ -178,38 +177,17 @@ def devto():
              "author": x["user"]["name"]} for x in get("https://dev.to/api/articles?top=1&tag=ai&per_page=8")]
 
 
-CATALOG = HOME / "state" / "gmi_catalog.json"
-
-
-def cmd_gmi_catalog(a):
-    """Refresh the GMI model catalog. Run by the gmi-catalog service (outside the agent), which holds the key."""
-    key = os.environ.get("GMI_API_KEY") or os.environ.get("GMI_MAAS_API_KEY")
-    if not key:
-        sys.exit("no GMI_API_KEY")
-    try:
-        data = get("https://api.gmi-serving.com/v1/models", {"Authorization": f"Bearer {key}"})
-    except Exception as e:
-        sys.exit(f"GMI model list failed: {e}")
-    ids = sorted({m["id"] for m in data.get("data", [])})
-    old = json.loads(CATALOG.read_text()) if CATALOG.exists() else {}
-    today = NOW.date().isoformat()
-    seen = old.get("first_seen", {})
-    baseline = not seen
-    for i in ids:
-        seen.setdefault(i, "baseline" if baseline else today)
-    CATALOG.parent.mkdir(parents=True, exist_ok=True)
-    tmp = CATALOG.with_suffix(".tmp")
-    tmp.write_text(json.dumps({"updated": NOW.isoformat(timespec="minutes"), "count": len(ids),
-                               "first_seen": {i: seen[i] for i in ids}}, indent=1))
-    tmp.replace(CATALOG)
-    print(f"{len(ids)} models")
+# Written by the gmi-lab service (lab.py), the only process holding the GMI key; the old path is a fallback.
+CATALOG = HOME / "lab" / "shared" / "catalog.json"
+OLD_CATALOG = HOME / "state" / "gmi_catalog.json"
 
 
 def gmi_models():
     """Models that appeared on GMI in the last 3 days (from the catalog file; the agent never holds the key)."""
-    if not CATALOG.exists():
+    path = CATALOG if CATALOG.exists() else OLD_CATALOG
+    if not path.exists():
         return {"error": "catalog not refreshed yet"}
-    c = json.loads(CATALOG.read_text())
+    c = json.loads(path.read_text())
     since = (NOW - dt.timedelta(days=3)).date().isoformat()
     return {"updated": c["updated"], "count": c["count"],
             "new": sorted(i for i, d in c["first_seen"].items() if d != "baseline" and d >= since)}
@@ -334,11 +312,9 @@ def main():
     d = sub.add_parser("digest")
     d.add_argument("--out")
     sub.add_parser("opportunities").add_argument("--out")
-    sub.add_parser("gmi-catalog")
     a = ap.parse_args()
     {"github": cmd_github, "repo": cmd_repo, "tree": cmd_tree, "file": cmd_file, "digest": cmd_digest,
-     "opportunities": cmd_opportunities,
-     "gmi-catalog": cmd_gmi_catalog}[a.cmd](a)
+     "opportunities": cmd_opportunities}[a.cmd](a)
 
 
 if __name__ == "__main__":

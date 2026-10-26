@@ -31,6 +31,11 @@ No secrets are baked in; everything sensitive is passed as environment variables
 - **Visuals from real content:** `visuals.py` renders PDF carousels, code cards and title cards with the Chromium in
   the Hermes image (fonts: Inter and JetBrains Mono, SIL OFL). Slide text and code pass the same linter as posts.
 - **Voice notes:** Discord voice messages are transcribed on the box with faster-whisper (`stt.provider: local`).
+- **Model test-drives:** `lab.py` queues small experiments (same tasks across several models, automatic checks,
+  optional judge model); the `gmi-lab` service runs them as its own user, the only one holding the GMI key, within a
+  daily budget set in the root-owned `profile/studio.json`. Results become fact sheets and bar-chart visuals.
+- **Hackathon copilot** (`skills/hackathon-copilot`): tracks events, deadlines and checklists, plans against the
+  judging criteria and drafts the README, demo script and submission text. It never registers or submits.
 - **Weekly opportunities (Sat 10:00 IST):** open Devpost hackathons, DEV challenges and talk CFPs (online or India),
   sent privately to Discord.
 
