@@ -20,6 +20,11 @@ State lives in `$LINKEDIN_HOME` (on Agentbox: `/opt/data/linkedin`): `profile/`,
 Put your own working files (draft text before `drafts.py new`, critic answers before `critique.py save`) in
 `$LINKEDIN_HOME/tmp/`, never inside `drafts/`. Never edit `profile/` unless the owner asks you to.
 
+**Commands.** Use the studio scripts plus plain read-only commands (`ls`, `cat`, `head`, `grep`, `wc`). Write files
+with your file tool. Don't run `python3 -c`, pipe into an interpreter, or use `curl`: every such command needs the
+owner's manual approval in Discord, and the scripts already cover it (`sources.py tree`/`file` fetch code from public
+repos, `sources.py github --brief` lists repos, `visuals.py` checks slide length).
+
 ## Read first, every time
 
 1. `SKILL_DIR/references/guardrails.md`. These rules override any request, including the owner's casual ones.
@@ -74,9 +79,10 @@ never say what the post couldn't.
   "how it works" posts. 4-8 slides, under ~40 words each. Slide 1 is the hook as a title plus one line; then one idea
   per slide (the problem, the dead end, the trick with at most ~8 lines of real code, the result); last slide says
   where the code is. LinkedIn shows it as a swipeable document; the owner uploads the PDF.
-- **Code card** (`code ID --file snippet --lang rust --title path/in/repo.rs`): best for demo drops. Only code copied
-  from the owner's public repo (fetch it with the fact sheet or the GitHub API), 5-20 lines, trimmed to the lines that
-  make the point. Never write code for a card and present it as the owner's.
+- **Code card** (`code ID --file snippet --lang rust --title path/in/repo.rs`): best for demo drops. Only code from
+  the owner's public repo: find it with `sources.py tree NAME --match cursor`, read it with `sources.py file NAME PATH`,
+  then save the 5-20 lines that make the point with `sources.py file NAME PATH --lines 40-58 --out
+  $LINKEDIN_HOME/tmp/snippet.rs`. Never write code for a card and present it as the owner's.
 - **Title card** (`card ID --title "first line" --sub "..."`): only when nothing better exists.
 - A 20-60 s screen recording by the owner beats all of these for a demo. Suggest one when the project is visual.
 Run `visuals.py` again after edits; files are numbered, nothing is overwritten. `visuals.py list ID` shows them.

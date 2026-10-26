@@ -3,6 +3,8 @@
 
   sources.py github [--days 14]          public repos of $GITHUB_USER with recent pushes
   sources.py repo NAME [--out FACTS.md]  fact sheet for one public repo (README, commits, releases)
+  sources.py tree NAME [--match RE]      file paths in a public repo
+  sources.py file NAME PATH [--lines 10-40] [--out F]   one file (or a line range) from a public repo
   sources.py digest [--out DIGEST.json]  what's new in AI/dev: HN, GitHub, Hugging Face, dev.to, new GMI models
   sources.py opportunities [--out F]     open hackathons (Devpost), DEV challenges, talk CFPs (India or online)
   sources.py gmi-catalog                 refresh state/gmi_catalog.json (gmi-catalog service only; needs the key)
@@ -65,17 +67,53 @@ def cmd_github(a):
                     "language": r["language"], "topics": r.get("topics", []), "homepage": r["homepage"],
                     "created": r["created_at"][:10], "pushed": r["pushed_at"][:10], "url": r["html_url"],
                     "new": dt.datetime.fromisoformat(r["created_at"].replace("Z", "+00:00")) >= since})
-    print(json.dumps(out, indent=1, ensure_ascii=False))
+    if a.brief:
+        print("\n".join(f"{r['name']} | {r['language'] or '-'} | {r['stars']} stars | pushed {r['pushed']}"
+                        f"{' | NEW' if r['new'] else ''} | {r['description'] or ''}" for r in out) or "no recent activity")
+    else:
+        print(json.dumps(out, indent=1, ensure_ascii=False))
 
 
-def cmd_repo(a):
-    user = gh_user()
-    if a.name.lower() in excluded():
-        sys.exit(f"{a.name} is in exclude_repos.txt")
-    base = f"https://api.github.com/repos/{user}/{a.name}"
+def public_repo(name):
+    """(api base url, repo json) for one of the owner's own public, non-excluded repos; exits otherwise."""
+    if name.lower() in excluded():
+        sys.exit(f"{name} is in exclude_repos.txt")
+    base = f"https://api.github.com/repos/{gh_user()}/{name}"
     r = get(base)
     if r.get("private") or r.get("fork"):
         sys.exit("only your own public repos can be used as sources")
+    return base, r
+
+
+def cmd_tree(a):
+    base, r = public_repo(a.name)
+    paths = [t["path"] for t in get(f"{base}/git/trees/{r['default_branch']}?recursive=1")["tree"] if t["type"] == "blob"]
+    if a.match:
+        paths = [x for x in paths if re.search(a.match, x, re.I)]
+    print("\n".join(paths[:300]) or "no matching files")
+
+
+def cmd_file(a):
+    base, r = public_repo(a.name)
+    f = get(f"{base}/contents/{urllib.parse.quote(a.path)}?ref={r['default_branch']}")
+    if f.get("type") != "file" or "content" not in f:
+        sys.exit(f"{a.path} is not a file in {a.name}")
+    lines = base64.b64decode(f["content"]).decode("utf-8", "replace").splitlines()
+    lo, hi = 1, len(lines)
+    if a.lines:
+        lo, _, hi = a.lines.partition("-")
+        lo, hi = int(lo), int(hi or lo)
+    part = lines[lo - 1:hi]
+    if a.out:
+        Path(a.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(a.out).write_text("\n".join(part) + "\n", encoding="utf-8")
+        print(f"{a.out} ({len(part)} lines, {a.name}/{a.path}:{lo}-{lo + len(part) - 1})")
+    else:
+        print("\n".join(f"{n:5}  {t}" for n, t in enumerate(part, lo)))
+
+
+def cmd_repo(a):
+    base, r = public_repo(a.name)
     readme = safe(get, base + "/readme")
     text = base64.b64decode(readme["content"]).decode("utf-8", "replace") if "content" in readme else ""
     text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
@@ -280,16 +318,26 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     g = sub.add_parser("github")
     g.add_argument("--days", type=int, default=14)
+    g.add_argument("--brief", action="store_true", help="one line per repo instead of JSON")
     r = sub.add_parser("repo")
     r.add_argument("name")
     r.add_argument("--out")
     r.add_argument("--max-readme", type=int, default=7000)
+    t = sub.add_parser("tree")
+    t.add_argument("name")
+    t.add_argument("--match")
+    f = sub.add_parser("file")
+    f.add_argument("name")
+    f.add_argument("path")
+    f.add_argument("--lines", help="e.g. 10-40")
+    f.add_argument("--out")
     d = sub.add_parser("digest")
     d.add_argument("--out")
     sub.add_parser("opportunities").add_argument("--out")
     sub.add_parser("gmi-catalog")
     a = ap.parse_args()
-    {"github": cmd_github, "repo": cmd_repo, "digest": cmd_digest, "opportunities": cmd_opportunities,
+    {"github": cmd_github, "repo": cmd_repo, "tree": cmd_tree, "file": cmd_file, "digest": cmd_digest,
+     "opportunities": cmd_opportunities,
      "gmi-catalog": cmd_gmi_catalog}[a.cmd](a)
 
 
