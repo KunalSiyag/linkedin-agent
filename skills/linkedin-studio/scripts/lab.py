@@ -326,8 +326,9 @@ def run_job(key, job, budget_left):
 
 def cmd_serve(a):
     key = os.environ.get("GMI_API_KEY") or os.environ.get("GMI_MAAS_API_KEY")
-    if not key:
-        sys.exit("[gmi-lab] no GMI key in the environment")
+    while not key:  # exiting would make s6 restart us every second
+        print("[gmi-lab] no GMI key in the environment; idle", flush=True)
+        time.sleep(3600)
     for d in (RESULTS, SHARED, STATE):
         d.mkdir(parents=True, exist_ok=True)
     last_catalog = 0.0
