@@ -16,7 +16,8 @@ TASKS.json:
    "tasks": [{"id": "t1", "prompt": "...",
               "expect": {"contains": ["..."]} | {"regex": "..."} | {"exact": "..."} | {"json_keys": ["a", "b"]}}],
    "rubric": "optional: what the judge scores 1-5 (needs --judge)"}
-Limits (set by the owner in profile/studio.json "lab", which the agent can't edit): daily_usd (default 1.00),
+Limits (the owner's profile/studio.json "lab" block, copied at boot to the root-owned LAB/limits.json; the agent can
+edit neither): daily_usd (default 1.00),
 max_models 8, max_tasks 20, max_tokens 2000.
 """
 import argparse
@@ -33,7 +34,8 @@ import urllib.request
 from pathlib import Path
 
 HOME = Path(os.environ.get("LINKEDIN_HOME") or Path(os.environ.get("HERMES_HOME", "~/.hermes")).expanduser() / "linkedin")
-LAB = HOME / "lab"
+# Outside HERMES_HOME on purpose: Hermes keeps its home 0700, and the gmilab user must never get into it.
+LAB = Path(os.environ.get("GMI_LAB_DIR", "/var/lib/gmi-lab"))
 QUEUE, RESULTS, SHARED, STATE = LAB / "queue", LAB / "results", LAB / "shared", LAB / "state"
 CATALOG = SHARED / "catalog.json"
 OLD_CATALOG = HOME / "state" / "gmi_catalog.json"
@@ -46,10 +48,14 @@ def now():
 
 
 def limits():
-    try:
-        lab = json.loads((HOME / "profile" / "studio.json").read_text()).get("lab", {})
-    except (OSError, ValueError):
-        lab = {}
+    """From LAB/limits.json (root-owned; the boot hook copies the "lab" block of profile/studio.json there)."""
+    lab = {}
+    for p, pick in ((LAB / "limits.json", lambda d: d), (HOME / "profile" / "studio.json", lambda d: d.get("lab", {}))):
+        try:
+            lab = pick(json.loads(p.read_text()))
+            break
+        except (OSError, ValueError):
+            continue
     return {"daily_usd": float(lab.get("daily_usd", 1.0)), "max_models": int(lab.get("max_models", 8)),
             "max_tasks": int(lab.get("max_tasks", 20)), "max_tokens": int(lab.get("max_tokens", 2000))}
 

@@ -3,5 +3,7 @@
 # the agent (user hermes) can't read this process's environment, and the script is the image's root-owned copy,
 # so the agent can't change what runs with the key or raise the budget (profile/studio.json is root-owned too).
 LH="${LINKEDIN_HOME:-${HERMES_HOME:-/opt/data}/linkedin}"
-exec s6-setuidgid gmilab env HOME=/tmp LINKEDIN_HOME="$LH" /opt/hermes/.venv/bin/python -u \
+# GMI_LAB_DIR holds the queue, results, prices, spend ledger and limits.json (the owner's budget, copied there by
+# the boot hook because Hermes keeps /opt/data 0700 and this user can't read the profile).
+exec s6-setuidgid gmilab env HOME=/tmp LINKEDIN_HOME="$LH" GMI_LAB_DIR=/var/lib/gmi-lab /opt/hermes/.venv/bin/python -u \
   /opt/linkedin-agent/skills/linkedin-studio/scripts/lab.py serve 2>&1

@@ -38,11 +38,16 @@ echo "[linkedin-studio] skills from $SRC ($(git -C "$SRC" rev-parse --short HEAD
 
 as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state" "$LH/tmp" "$LH/hackathons"
 # Model lab: the agent queues jobs; only gmilab (the gmi-lab service) writes results, prices and the spend ledger.
-mkdir -p "$LH/lab/queue" "$LH/lab/results" "$LH/lab/shared" "$LH/lab/state"
-chown root:root "$LH/lab" && chmod 755 "$LH/lab"
-chown hermes:hermes "$LH/lab/queue"
-id gmilab >/dev/null 2>&1 && chown -R gmilab:gmilab "$LH/lab/results" "$LH/lab/shared" "$LH/lab/state"
-chmod 755 "$LH/lab/queue" "$LH/lab/results" "$LH/lab/shared" "$LH/lab/state"
+# It lives outside HERMES_HOME (kept 0700 by Hermes) on the container disk, so it resets if the container restarts.
+LAB=/var/lib/gmi-lab
+mkdir -p "$LAB/queue" "$LAB/results" "$LAB/shared" "$LAB/state"
+chown root:root "$LAB" && chmod 755 "$LAB"
+chown hermes:hermes "$LAB/queue"
+id gmilab >/dev/null 2>&1 && chown -R gmilab:gmilab "$LAB/results" "$LAB/shared" "$LAB/state"
+chmod 755 "$LAB/queue" "$LAB/results" "$LAB/shared" "$LAB/state"
+/opt/hermes/.venv/bin/python -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1])).get("lab", {})))' \
+  "$LH/profile/studio.json" > "$LAB/limits.json" 2>/dev/null || echo '{}' > "$LAB/limits.json"
+chmod 644 "$LAB/limits.json"
 cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md" && chown root:root "$HH/SOUL.md" && chmod 644 "$HH/SOUL.md"
 # The guardrail lists are root-owned too: change them from the console, not through the agent.
 for f in blocklist.txt never_name.txt sponsors.txt studio.json; do

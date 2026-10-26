@@ -178,7 +178,7 @@ def devto():
 
 
 # Written by the gmi-lab service (lab.py), the only process holding the GMI key; the old path is a fallback.
-CATALOG = HOME / "lab" / "shared" / "catalog.json"
+CATALOG = Path(os.environ.get("GMI_LAB_DIR", "/var/lib/gmi-lab")) / "shared" / "catalog.json"
 OLD_CATALOG = HOME / "state" / "gmi_catalog.json"
 
 
