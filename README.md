@@ -30,6 +30,14 @@ No secrets are baked in; everything sensitive is passed as environment variables
   models.
 - **Visuals from real content:** `visuals.py` renders PDF carousels, code cards and title cards with the Chromium in
   the Hermes image (fonts: Inter and JetBrains Mono, SIL OFL). Slide text and code pass the same linter as posts.
+- **Videos, made on the box:** `video.py` sends jobs to the *studio computer* (`studio-computer` service), a headless
+  Chromium + ffmpeg that runs as its own user with an empty environment, so nothing a web page does can reach the
+  Discord token or the GMI key. It records scripted, frame-exact tours of public pages (scroll, read, highlight, zoom,
+  click with a visible cursor; GitHub, Hugging Face, dev.to and HN by default, more via `profile/studio.json` "video")
+  and renders motion videos from a JSON storyboard (title, clip, points, stat, code, chart, end) with the easing,
+  stagger and reading-time rules baked into `assets/video/`, so any GMI model gets good motion without seeing frames.
+  On-screen text passes the post linter; recorded page text passes the private-term checks. Output fits Discord's
+  attachment limit (`max_mb`, default 9.5).
 - **Voice notes:** Discord voice messages are transcribed on the box with faster-whisper (`stt.provider: local`).
 - **Model test-drives:** `lab.py` queues small experiments (same tasks across several models, automatic checks,
   optional judge model); the `gmi-lab` service runs them as its own user, the only one holding the GMI key, within a

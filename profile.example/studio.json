@@ -13,5 +13,11 @@
   "max_models": 8,
   "max_tasks": 20,
   "max_tokens": 2000
+ },
+ "video": {
+  "allow_domains": [],
+  "max_mb": 9.5,
+  "max_clip_seconds": 60,
+  "max_video_seconds": 90
  }
 }

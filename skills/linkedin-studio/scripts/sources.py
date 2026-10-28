@@ -2,7 +2,9 @@
 """Real material for posts and the morning digest. Standard library only; public data only.
 
   sources.py github [--days 14]          public repos of $GITHUB_USER with recent pushes
-  sources.py repo NAME [--out FACTS.md]  fact sheet for one public repo (README, commits, releases)
+  sources.py repo NAME [--out FACTS.md]  fact sheet for one public repo (README, commits, releases); OWNER/NAME for
+                                         someone else's public repo (credit them; "I built" is only for the owner's)
+  sources.py trending [--days 7]         new repos gaining stars fastest (LLM, agents, dev tools), one line each
   sources.py tree NAME [--match RE]      file paths in a public repo
   sources.py file NAME PATH [--lines 10-40] [--out F]   one file (or a line range) from a public repo
   sources.py digest [--out DIGEST.json]  what's new in AI/dev: HN, GitHub, Hugging Face, dev.to, new GMI models
@@ -73,8 +75,18 @@ def cmd_github(a):
         print(json.dumps(out, indent=1, ensure_ascii=False))
 
 
-def public_repo(name):
-    """(api base url, repo json) for one of the owner's own public, non-excluded repos; exits otherwise."""
+def public_repo(name, others=False):
+    """(api base url, repo json) for one of the owner's own public, non-excluded repos; exits otherwise.
+    others=True also takes OWNER/NAME for anyone's public repo (fact sheets only, never code cards)."""
+    if "/" in name:
+        if not others or not re.fullmatch(r"[\w.-]+/[\w.-]+", name):
+            sys.exit("use the name of one of your own repos" if not others else "use OWNER/NAME")
+        if name.split("/")[0].lower() == gh_user().lower():
+            return public_repo(name.split("/")[1])
+        r = get(f"https://api.github.com/repos/{name}")
+        if r.get("private"):
+            sys.exit(f"{name} isn't public")
+        return f"https://api.github.com/repos/{name}", r
     if name.lower() in excluded():
         sys.exit(f"{name} is in exclude_repos.txt")
     base = f"https://api.github.com/repos/{gh_user()}/{name}"
@@ -112,13 +124,15 @@ def cmd_file(a):
 
 
 def cmd_repo(a):
-    base, r = public_repo(a.name)
+    base, r = public_repo(a.name, others=True)
     readme = safe(get, base + "/readme")
     text = base64.b64decode(readme["content"]).decode("utf-8", "replace") if "content" in readme else ""
     text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
     commits = safe(get, base + "/commits?per_page=15")
     releases = safe(get, base + "/releases?per_page=5")
-    lines = [f"# Fact sheet: {r['full_name']}", "",
+    mine = r["owner"]["login"].lower() == os.environ.get("GITHUB_USER", "").lower()
+    lines = [f"# Fact sheet: {r['full_name']}" + ("" if mine else f" (by {r['owner']['login']}, not the owner's work)"),
+             f"Fetched {NOW.date().isoformat()}; star counts change daily, so say \"as of\" this date.", "",
              f"- URL: {r['html_url']}", f"- Description: {r['description'] or '-'}",
              f"- Language: {r['language'] or '-'}; topics: {', '.join(r.get('topics', [])) or '-'}",
              f"- Stars: {r['stargazers_count']}; forks: {r['forks_count']}",
@@ -146,13 +160,14 @@ def hn():
             for h in sorted(hits, key=lambda h: -h["points"])[:15]]
 
 
-def gh_trending():
-    week = (NOW - dt.timedelta(days=7)).date().isoformat()
+def gh_trending(days=7):
+    week = (NOW - dt.timedelta(days=days)).date().isoformat()
     out = []
     for topic in ("llm", "ai-agents", "developer-tools"):
         q = urllib.parse.quote(f"created:>{week} topic:{topic}")
         for r in get(f"https://api.github.com/search/repositories?q={q}&sort=stars&order=desc&per_page=5")["items"]:
-            out.append({"repo": r["full_name"], "stars": r["stargazers_count"], "description": r["description"], "url": r["html_url"], "topic": topic})
+            out.append({"repo": r["full_name"], "stars": r["stargazers_count"], "description": r["description"], "url": r["html_url"],
+                        "topic": topic, "language": r["language"], "created": r["created_at"][:10]})
     seen, uniq = set(), []
     for r in sorted(out, key=lambda r: -r["stars"]):
         if r["repo"] not in seen:
@@ -279,6 +294,12 @@ def cfps():
     return sorted(out.values(), key=lambda c: c["cfp_closes"])[:20]
 
 
+def cmd_trending(a):
+    rows = gh_trending(a.days)
+    print("\n".join(f"{r['repo']} | {r['stars']} stars | {r['language'] or '-'} | created {r['created']} | {r['url']} | "
+                    f"{(r['description'] or '')[:110]}" for r in rows) or "nothing found")
+
+
 def cmd_opportunities(a):
     d = {"generated": NOW.isoformat(timespec="minutes"), "hackathons": safe(devpost),
          "dev_challenges": safe(dev_challenges), "cfps": safe(cfps)}
@@ -334,12 +355,14 @@ def main():
     f.add_argument("path")
     f.add_argument("--lines", help="e.g. 10-40")
     f.add_argument("--out")
+    tr = sub.add_parser("trending")
+    tr.add_argument("--days", type=int, default=7)
     d = sub.add_parser("digest")
     d.add_argument("--out")
     sub.add_parser("opportunities").add_argument("--out")
     a = ap.parse_args()
     {"github": cmd_github, "repo": cmd_repo, "tree": cmd_tree, "file": cmd_file, "digest": cmd_digest,
-     "opportunities": cmd_opportunities}[a.cmd](a)
+     "opportunities": cmd_opportunities, "trending": cmd_trending}[a.cmd](a)
 
 
 if __name__ == "__main__":

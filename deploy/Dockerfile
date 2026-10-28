@@ -19,6 +19,18 @@ COPY deploy/SOUL.md /opt/linkedin-agent/deploy/SOUL.md
 RUN useradd --system --no-create-home --shell /usr/sbin/nologin gmilab
 COPY --chmod=0755 deploy/s6-rc.d/gmi-lab/ /etc/s6-overlay/s6-rc.d/gmi-lab/
 RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/gmi-lab
+# studio-computer records pages and renders videos as its own user, with no environment and no access to the agent's
+# data. Fonts: CJK and emoji so trending READMEs don't render as boxes; Inter/JetBrains Mono stand in for the
+# macOS/Windows system fonts pages ask for.
+RUN useradd --system --no-create-home --shell /usr/sbin/nologin computer \
+ && apt-get -o Acquire::Retries=3 update \
+ && apt-get -o Acquire::Retries=3 install -y --no-install-recommends fonts-noto-cjk fonts-noto-color-emoji fonts-liberation2 \
+ && rm -rf /var/lib/apt/lists/*
+COPY skills/linkedin-studio/assets/fonts/Inter.ttf skills/linkedin-studio/assets/fonts/JetBrainsMono.ttf /usr/local/share/fonts/studio/
+COPY deploy/fonts/studio-fonts.conf /etc/fonts/conf.d/60-studio-fonts.conf
+RUN fc-cache -f >/dev/null
+COPY --chmod=0755 deploy/s6-rc.d/studio-computer/ /etc/s6-overlay/s6-rc.d/studio-computer/
+RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/studio-computer
 
 # Local speech-to-text for Discord voice notes (Hermes' stt.provider=local). Versions match Hermes' uv.lock; a newer
 # av breaks faster-whisper's decoder. The Whisper model itself downloads to the data disk on first use.

@@ -1,0 +1,9 @@
+#!/bin/sh
+# The studio computer: headless Chromium + ffmpeg that record public pages and render videos (video.py serve).
+# It runs as the computer user with an empty environment, so neither the browser nor anything a web page does can
+# reach the Discord token, the API key or the GMI key, and Hermes keeps /opt/data 0700 so it can't read the agent's
+# data either. The script is the image's root-owned copy; the agent only drops job files in its queue.
+SC=/var/lib/studio-computer
+exec /command/s6-setuidgid computer /usr/bin/env -i PATH=/usr/local/bin:/usr/bin:/bin HOME="$SC/work" TMPDIR="$SC/work" \
+  LANG=C.UTF-8 STUDIO_COMPUTER_DIR="$SC" /opt/hermes/.venv/bin/python -u \
+  /opt/linkedin-agent/skills/linkedin-studio/scripts/video.py serve 2>&1

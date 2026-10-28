@@ -48,6 +48,17 @@ chmod 755 "$LAB/queue" "$LAB/results" "$LAB/shared" "$LAB/state"
 /opt/hermes/.venv/bin/python -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1])).get("lab", {})))' \
   "$LH/profile/studio.json" > "$LAB/limits.json" 2>/dev/null || echo '{}' > "$LAB/limits.json"
 chmod 644 "$LAB/limits.json"
+# Studio computer: the agent queues video jobs; only the computer user (the studio-computer service) renders them and
+# writes results. Container disk like the lab: clips reset on restart, delivered videos are copied into drafts/.
+SC=/var/lib/studio-computer
+mkdir -p "$SC/queue" "$SC/results" "$SC/work" "$SC/state"
+chown root:root "$SC" && chmod 755 "$SC"
+chown hermes:hermes "$SC/queue" && chmod 755 "$SC/queue"
+id computer >/dev/null 2>&1 && chown -R computer:computer "$SC/results" "$SC/work" "$SC/state"
+chmod 755 "$SC/results" "$SC/state" && chmod 700 "$SC/work"
+/opt/hermes/.venv/bin/python -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1])).get("video", {})))' \
+  "$LH/profile/studio.json" > "$SC/limits.json" 2>/dev/null || echo '{}' > "$SC/limits.json"
+chmod 644 "$SC/limits.json"
 cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md" && chown root:root "$HH/SOUL.md" && chmod 644 "$HH/SOUL.md"
 # The guardrail lists are root-owned too: change them from the console, not through the agent.
 for f in blocklist.txt never_name.txt sponsors.txt studio.json; do

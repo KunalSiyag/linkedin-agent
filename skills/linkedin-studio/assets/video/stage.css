@@ -1,0 +1,128 @@
+/* Motion system for studio videos. Every animation is a CSS animation whose delay is on the video's global
+   timeline (--t0 = scene start, --t1 = scene end, --d = offset inside the scene); stage.js pauses them and seeks
+   every frame, so a render is deterministic. Only transform, opacity and filter animate. Nothing moves while a scene
+   holds (the progress bar is drawn by ffmpeg), so held frames are captured once and reused.
+   Curves (from the motion guidelines): arrivals land on a long tail, moves ease both ways, exits accelerate and are
+   about half as long as entrances. Stagger 40-80 ms for list items. Nothing scales from 0 except a bar growing from
+   its baseline. */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-arrive: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
+  --in: 0.8s;
+  --out: 0.28s;
+  --bg: #0f1115;
+  --panel: #161b22;
+  --line: #262c36;
+  --text: #eef1f5;
+  --muted: #9aa4b2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: var(--W); height: var(--H); overflow: hidden; background: var(--bg); }
+#stage { position: relative; width: var(--W); height: var(--H); overflow: hidden; background: var(--bg);
+  color: var(--text); font-family: Inter, sans-serif; font-feature-settings: "ss01", "cv11"; }
+#glow { position: absolute; width: 140%; height: 140%; left: -45%; top: -55%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%); }
+
+.scene { position: absolute; inset: 0; display: none; padding: calc(var(--H) * 0.1) calc(var(--W) * 0.1); }
+.scene.on { display: flex; }
+.scene > .pad { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center;
+  min-width: 0; min-height: 0; }
+.scene.exits > .pad { animation: exit var(--out) var(--ease-exit) both; animation-delay: calc(var(--t1) - var(--out)); }
+@keyframes exit { to { opacity: 0; transform: translate3d(0, calc(var(--u) * -18px), 0); filter: blur(6px); } }
+
+.fit { width: 100%; max-height: 100%; display: flex; flex-direction: column; gap: 0.5em; line-height: 1.3; min-height: 0; }
+.a-up { animation: up var(--in) var(--ease-arrive) both; animation-delay: calc(var(--t0) + var(--d, 0s)); }
+@keyframes up { from { opacity: 0; transform: translate3d(0, calc(var(--u) * 42px), 0); } }
+.a-blur { animation-name: upblur; }
+@keyframes upblur { from { opacity: 0; transform: translate3d(0, calc(var(--u) * 42px), 0); filter: blur(10px); } }
+.a-left { animation: left 0.5s var(--ease-out) both; animation-delay: calc(var(--t0) + var(--d, 0s)); }
+@keyframes left { from { opacity: 0; transform: translate3d(calc(var(--u) * -16px), 0, 0); } }
+.a-pop { animation: pop 0.7s var(--ease-arrive) both; animation-delay: calc(var(--t0) + var(--d, 0s)); }
+@keyframes pop { from { opacity: 0; transform: scale(0.95); } }
+.a-bar { transform-origin: left center; animation: bar 0.6s var(--ease-out) both;
+  animation-delay: calc(var(--t0) + var(--d, 0s)); }
+@keyframes bar { from { transform: scaleX(0); } }
+.a-grow { transform-origin: left center; animation: bar 0.9s var(--ease-in-out) both;
+  animation-delay: calc(var(--t0) + var(--d, 0s)); }
+.a-fade { animation: fade 0.5s var(--ease-out) both; animation-delay: calc(var(--t0) + var(--d, 0s)); }
+@keyframes fade { from { opacity: 0; } }
+
+h1 { font-size: 1em; font-weight: 760; line-height: 1.08; letter-spacing: -0.028em; text-wrap: balance; }
+h2 { font-size: 0.62em; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; text-wrap: balance; }
+p, li { text-wrap: pretty; }
+b { color: #fff; font-weight: 680; }
+code { font-family: JBM, monospace; font-size: 0.86em; background: #1c212b; padding: 0.05em 0.3em; border-radius: 0.25em; }
+.kicker { display: flex; align-items: center; gap: 0.6em; font-size: 0.3em; font-weight: 650; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--accent); }
+.kicker i { display: block; width: 2.4em; height: 0.28em; border-radius: 0.14em; background: var(--accent); }
+.sub { font-size: 0.4em; color: #c3ccd7; font-weight: 450; line-height: 1.35; }
+
+/* title / end */
+.t-title .fit { font-size: 110px; gap: 0.32em; }
+.t-end .pad { align-items: center; text-align: center; }
+.t-end .fit { align-items: center; font-size: 96px; gap: 0.36em; }
+.t-end .handle { font-size: 0.34em; color: var(--muted); font-weight: 550; letter-spacing: 0.01em; }
+
+/* points */
+.t-points .fit { font-size: 64px; gap: 0.7em; }
+.t-points h2 { font-size: 1.2em; }
+.t-points ul { list-style: none; display: flex; flex-direction: column; gap: 0.5em; }
+.t-points li { display: grid; grid-template-columns: 0.9em 1fr; gap: 0.55em; align-items: baseline; color: #d5dce5; line-height: 1.28; }
+.t-points li .m { width: 0.42em; height: 0.42em; border-radius: 0.1em; background: var(--accent); transform: translateY(-0.12em); }
+
+/* stat */
+.t-stat .pad { align-items: center; text-align: center; }
+.t-stat .fit { align-items: center; font-size: 250px; gap: 0.08em; }
+.t-stat .num { font-weight: 780; letter-spacing: -0.045em; line-height: 1; color: var(--accent);
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
+.t-stat .label { font-size: 0.24em; font-weight: 600; color: var(--text); letter-spacing: -0.01em; line-height: 1.2; }
+.t-stat .sub { font-size: 0.15em; }
+
+/* window chrome shared by code and clip */
+.win { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: calc(var(--u) * 20px);
+  overflow: hidden; box-shadow: 0 calc(var(--u) * 30px) calc(var(--u) * 80px) rgba(0, 0, 0, 0.45); display: flex; flex-direction: column; }
+.win .bar { flex: none; display: flex; align-items: center; gap: calc(var(--u) * 10px); height: calc(var(--u) * 50px);
+  padding: 0 calc(var(--u) * 20px); border-bottom: 1px solid var(--line); background: #11151b;
+  font: 500 calc(var(--u) * 21px) / 1 JBM, monospace; color: #8b949e; white-space: nowrap; overflow: hidden; }
+.win .bar i { flex: none; width: calc(var(--u) * 14px); height: calc(var(--u) * 14px); border-radius: 50%; }
+.win .bar span { margin-left: calc(var(--u) * 10px); overflow: hidden; text-overflow: ellipsis; }
+
+/* code */
+.t-code .pad { align-items: center; }
+.t-code .win { width: 100%; max-height: 100%; }
+.t-code .fit { font-size: 34px; padding: 1.1em 1.3em; }
+.t-code pre { font-family: JBM, monospace; font-size: 1em; line-height: 1.55; white-space: pre; color: #e6edf3;
+  font-variant-ligatures: none; }
+.t-code .ln { display: block; min-height: 1.55em; }
+.t-code .ln.dim { animation: left 0.5s var(--ease-out) both, dim 0.5s var(--ease-out) forwards;
+  animation-delay: calc(var(--t0) + var(--d, 0s)), calc(var(--t0) + var(--dd)); }
+@keyframes dim { to { opacity: 0.32; } }
+.t-code .ln.hot { background: color-mix(in srgb, var(--accent) 12%, transparent); box-shadow: inset 0.18em 0 0 var(--accent);
+  padding-left: 0.5em; border-radius: 0.2em; }
+
+/* chart */
+.t-chart .fit { font-size: 56px; gap: 0.75em; }
+.t-chart h2 { font-size: 1.05em; }
+.t-chart .rows { display: flex; flex-direction: column; gap: 0.42em; font-size: 0.6em; }
+.t-chart .row { display: grid; grid-template-columns: 34% 1fr auto; align-items: center; gap: 0.7em; }
+.t-chart .lab { font-family: JBM, monospace; color: #c9d1db; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t-chart .track { height: 1.15em; border-radius: 0.3em; background: #1c212b; overflow: hidden; }
+.t-chart .fill { height: 100%; border-radius: 0.3em; background: #3b4b5e; }
+.t-chart .fill.best { background: var(--accent); }
+.t-chart .val { font-weight: 680; font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: right; }
+.t-chart .note { font-size: 0.4em; color: var(--muted); }
+
+/* clip */
+.t-clip { padding: calc(var(--H) * 0.06) calc(var(--W) * 0.06); }
+.t-clip .pad { justify-content: flex-start; align-items: center; gap: calc(var(--u) * 34px); }
+.t-clip .box { flex: 1 1 auto; width: 100%; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.t-clip .win { flex: none; }
+/* Own layer: a new frame every 33 ms must not repaint the window's large shadow. */
+.t-clip .shot { display: block; width: 100%; flex: 1; object-fit: cover; object-position: top left; background: #0d1117;
+  will-change: transform; }
+.t-clip .cap { flex: none; width: 100%; text-align: center; font-size: 46px; font-weight: 640; line-height: 1.22;
+  letter-spacing: -0.012em; color: var(--text); text-wrap: balance; max-height: 2.6em; }
+.t-clip .cap.fit { display: block; }
+
