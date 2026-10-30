@@ -722,7 +722,7 @@ def run_kit(job, out, work, lim):
            "STUDIO_HISTORY_FILE": str(KIT_STATE / "history.json"), "STUDIO_VENV_PYTHON": sys.executable,
            "STUDIO_PYTHON": sys.executable, "CHROME_BIN": chrome(), "MEDIA_PROVIDER": "gmi",
            "STUDIO_GMI_PROXY": str(GMI_PROXY), "STUDIO_WATERMARK": job["watermark"],
-           "STUDIO_WORKERS": str(max(2, min(os.cpu_count() or 2, 6))), "HF_HOME": str(KIT_STATE / "hf")}
+           "STUDIO_WORKERS": str(len(os.sched_getaffinity(0))), "HF_HOME": str(KIT_STATE / "hf")}
     p = subprocess.run([sys.executable, str(KIT / "lib" / "studio.py"), tool, json.dumps(args)], cwd=KIT, env=env,
                        capture_output=True, text=True, timeout=lim["kit_timeout"])
     try:
@@ -743,9 +743,30 @@ def run_kit(job, out, work, lim):
     return r
 
 
+def cpu_quota():
+    """CPUs this container may really use. os.cpu_count() and ffmpeg see the host's cores (32 on Agentbox for a 2-CPU,
+    4 GB box), and sizing workers and encoder threads by that starved the gateway until the platform restarted it."""
+    try:
+        q, p = Path("/sys/fs/cgroup/cpu.max").read_text().split()
+        n = int(q) / int(p) if q != "max" else len(os.sched_getaffinity(0))
+    except (OSError, ValueError):
+        n = len(os.sched_getaffinity(0))
+    try:  # ~1 GB per render worker (frames + its encoder), leaving room for the gateway
+        m = Path("/sys/fs/cgroup/memory.max").read_text().strip()
+        n = min(n, max(1, (int(m) >> 30) - 2)) if m != "max" else n
+    except (OSError, ValueError):
+        pass
+    return max(1, min(int(n), 6))
+
+
 def cmd_run(a):
     """Render one job. Runs as the studio-computer user in its own process group, killed by serve() on timeout."""
     import video_engine as eng
+    # Renders run behind the gateway: low priority, and pinned to the container's real CPU count so ffmpeg and the
+    # kit's worker pool size themselves to it (both inherit the affinity).
+    os.nice(10)
+    cpus = sorted(os.sched_getaffinity(0))
+    os.sched_setaffinity(0, set(cpus[:cpu_quota()]))
     i = a.job
     lim = limits()
     out = RESULTS / i
