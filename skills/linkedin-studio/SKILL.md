@@ -106,7 +106,9 @@ it, then run it again. Files are numbered, nothing is overwritten; `visuals.py l
 
 Videos are made with the owner's video kit: narrated 16:9 videos with real captures, captions, a rotating
 motion-graphic look, music and SFX, and automatic QA. **Read `SKILL_DIR/references/video-kit.md` and follow it for
-every video.** **When the owner asks for a recording or a video, make it. Don't tell them you can't.**
+every video.** **When the owner asks for a recording or a video, make it. Don't tell them you can't.** Make it only
+with `video.py` (the kit, recordings): never write your own video, TTS or recording scripts, install tools, or
+create new skills for it. If a kit step fails, tell the owner which step and the error.
 
 You have a computer for this: the studio computer, a sandboxed headless browser plus ffmpeg running as its own user.
 `python3 SKILL_DIR/scripts/video.py` sends it jobs:
