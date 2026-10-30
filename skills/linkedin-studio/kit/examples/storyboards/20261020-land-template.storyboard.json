@@ -1,0 +1,761 @@
+{
+ "look": "land",
+ "fps": 60,
+ "day": 1,
+ "voice_offset": 0,
+ "captions": {
+  "max_chars": 64
+ },
+ "phrases": [
+  [
+   "number one",
+   "#1"
+  ],
+  [
+   "day one",
+   "day 1"
+  ],
+  [
+   "day two",
+   "day 2"
+  ],
+  [
+   "step one",
+   "step 1"
+  ],
+  [
+   "step two",
+   "step 2"
+  ],
+  [
+   "step three",
+   "step 3"
+  ],
+  [
+   "AI Job Search",
+   "AI Job Search"
+  ],
+  [
+   "Claude Code",
+   "Claude Code"
+  ],
+  [
+   "sixty-nine",
+   "69"
+  ],
+  [
+   "twenty interviews",
+   "20 interviews"
+  ],
+  [
+   "one signed contract",
+   "1 signed contract"
+  ]
+ ],
+ "emphasis": [
+  "hired",
+  "#1",
+  "day 1",
+  "AI Job Search",
+  "69",
+  "20 interviews",
+  "1 signed contract",
+  "day 2",
+  "GitHub",
+  "Claude Code",
+  "/scrape",
+  "/apply",
+  "JOBS"
+ ],
+ "music": {
+  "file": "audio/music.mp3",
+  "drop_at": 5.178
+ },
+ "cover_time": 0.55,
+ "cover_text": [
+  "this AI got him hired"
+ ],
+ "scenes": [
+  {
+   "id": "p1",
+   "phase": "hook",
+   "project": true,
+   "end": 0.66,
+   "footage": "readme_rec2",
+   "cam": [
+    0,
+    0.3,
+    0.435
+   ],
+   "zoom": 2.0
+  },
+  {
+   "id": "f1",
+   "phase": "hook",
+   "end": 1.0,
+   "footage": "tunnel",
+   "footage_start": 1.0
+  },
+  {
+   "id": "p2",
+   "phase": "hook",
+   "project": true,
+   "end": 1.75,
+   "footage": "trending_rec",
+   "cam": [
+    0,
+    0.33,
+    0.27
+   ],
+   "zoom": 1.7
+  },
+  {
+   "id": "p3",
+   "phase": "hook",
+   "project": true,
+   "end": 2.75,
+   "footage": "readme_rec2",
+   "cam": [
+    0,
+    0.4,
+    0.035
+   ],
+   "zoom": 1.5
+  },
+  {
+   "id": "f2",
+   "phase": "hook",
+   "end": 3.05,
+   "footage": "maze",
+   "footage_start": 2.0
+  },
+  {
+   "id": "p4",
+   "phase": "hook",
+   "project": true,
+   "end": 3.55,
+   "footage": "trending_rec",
+   "cam": [
+    0,
+    0.8,
+    0.31
+   ],
+   "zoom": 3.0
+  },
+  {
+   "id": "p5",
+   "phase": "hook",
+   "project": true,
+   "end": 4.22,
+   "footage": "readme_rec2",
+   "cam": [
+    0,
+    0.33,
+    0.535
+   ],
+   "zoom": 1.8
+  },
+  {
+   "id": "f3",
+   "phase": "hook",
+   "end": 4.62,
+   "footage": "ink",
+   "footage_start": 8.0
+  },
+  {
+   "id": "day",
+   "phase": "title",
+   "daycard": true,
+   "plate": "light",
+   "end": 8.25,
+   "transition": "tear"
+  },
+  {
+   "id": "trend",
+   "phase": "screen",
+   "footage": "trending_rec",
+   "url": "github.com/trending",
+   "end": 10.38,
+   "transition": "whip",
+   "cam": [
+    [
+     0,
+     1.0,
+     1080,
+     700
+    ],
+    [
+     0.6,
+     1.0,
+     1080,
+     700
+    ],
+    [
+     1.3,
+     1.6,
+     900,
+     690
+    ],
+    [
+     2.13,
+     1.9,
+     820,
+     680
+    ]
+   ],
+   "cursor": [
+    [
+     0.45,
+     1750,
+     1150
+    ],
+    [
+     1.2,
+     1250,
+     760
+    ],
+    [
+     1.55,
+     640,
+     624,
+     "click"
+    ],
+    [
+     2.13,
+     660,
+     640
+    ]
+   ],
+   "boxes": [
+    {
+     "at": 0.95,
+     "rect": [
+      330,
+      585,
+      1462,
+      180
+     ],
+     "label": "#1 trending today"
+    },
+    {
+     "at": 1.5,
+     "rect": [
+      1640,
+      716,
+      152,
+      38
+     ],
+     "color": "teal",
+     "label": "+3,898 stars"
+    }
+   ]
+  },
+  {
+   "id": "repo",
+   "phase": "screen",
+   "footage": "readme_rec2",
+   "url": "github.com/MadsLorentzen/ai-job-search",
+   "end": 13.12,
+   "transition": "whip",
+   "cam": [
+    [
+     0,
+     1.0,
+     1080,
+     560
+    ],
+    [
+     0.62,
+     1.7,
+     1700,
+     560
+    ],
+    [
+     1.52,
+     2.0,
+     1750,
+     520
+    ],
+    [
+     2.32,
+     2.0,
+     1740,
+     500
+    ]
+   ],
+   "cursor": [
+    [
+     0.12,
+     1300,
+     800
+    ],
+    [
+     0.67,
+     1760,
+     545
+    ],
+    [
+     1.52,
+     1640,
+     470
+    ],
+    [
+     2.22,
+     1700,
+     500
+    ]
+   ],
+   "boxes": [
+    {
+     "at": 0.72,
+     "rect": [
+      1713,
+      525,
+      235,
+      33
+     ],
+     "label": "runs on Claude Code"
+    },
+    {
+     "at": 1.47,
+     "rect": [
+      1580,
+      452,
+      385,
+      74
+     ],
+     "color": "teal",
+     "label": "your own machine"
+    }
+   ]
+  },
+  {
+   "id": "step1",
+   "phase": "screen",
+   "footage": "readme_rec2",
+   "url": "github.com/MadsLorentzen/ai-job-search",
+   "end": 15.68,
+   "transition": "continue",
+   "cam": [
+    [
+     0.73,
+     2.18,
+     330,
+     4110,
+     "arc",
+     0.4
+    ],
+    [
+     1.48,
+     2.24,
+     320,
+     4150
+    ],
+    [
+     2.18,
+     2.24,
+     330,
+     4160
+    ]
+   ],
+   "cursor": [
+    [
+     0.18,
+     1100,
+     4300
+    ],
+    [
+     0.63,
+     275,
+     4064,
+     "click"
+    ],
+    [
+     1.18,
+     320,
+     4165
+    ]
+   ],
+   "boxes": [
+    {
+     "at": 0.48,
+     "rect": [
+      240,
+      4050,
+      72,
+      28
+     ],
+     "label": "step 1"
+    },
+    {
+     "at": 0.93,
+     "rect": [
+      238,
+      4138,
+      156,
+      56
+     ],
+     "label": "/setup"
+    }
+   ]
+  },
+  {
+   "id": "step2",
+   "phase": "screen",
+   "footage": "readme_rec2",
+   "url": "github.com/MadsLorentzen/ai-job-search",
+   "end": 20.02,
+   "transition": "continue",
+   "cam": [
+    [
+     0.62,
+     2.18,
+     500,
+     4110
+    ],
+    [
+     1.92,
+     2.24,
+     500,
+     4160
+    ],
+    [
+     2.92,
+     2.18,
+     530,
+     4270
+    ],
+    [
+     3.92,
+     2.18,
+     540,
+     4280
+    ]
+   ],
+   "cursor": [
+    [
+     0.32,
+     600,
+     4250
+    ],
+    [
+     1.07,
+     470,
+     4064,
+     "click"
+    ],
+    [
+     1.92,
+     500,
+     4170
+    ],
+    [
+     3.02,
+     520,
+     4290
+    ]
+   ],
+   "boxes": [
+    {
+     "at": 1.12,
+     "rect": [
+      430,
+      4050,
+      92,
+      28
+     ],
+     "label": "step 2"
+    },
+    {
+     "at": 1.92,
+     "rect": [
+      421,
+      4138,
+      130,
+      56
+     ],
+     "label": "/scrape"
+    },
+    {
+     "at": 3.02,
+     "rect": [
+      421,
+      4256,
+      205,
+      56
+     ],
+     "label": "rank by fit"
+    }
+   ]
+  },
+  {
+   "id": "step3",
+   "phase": "screen",
+   "footage": "readme_rec2",
+   "url": "github.com/MadsLorentzen/ai-job-search",
+   "end": 23.9,
+   "transition": "continue",
+   "cam": [
+    [
+     0.58,
+     2.11,
+     780,
+     4110
+    ],
+    [
+     1.58,
+     2.18,
+     780,
+     4100
+    ],
+    [
+     2.38,
+     2.11,
+     830,
+     4270
+    ],
+    [
+     3.48,
+     2.18,
+     840,
+     4280
+    ]
+   ],
+   "cursor": [
+    [
+     0.28,
+     1000,
+     4300
+    ],
+    [
+     1.38,
+     770,
+     4064,
+     "click"
+    ],
+    [
+     2.28,
+     830,
+     4275
+    ],
+    [
+     3.38,
+     900,
+     4300
+    ]
+   ],
+   "boxes": [
+    {
+     "at": 1.43,
+     "rect": [
+      690,
+      4050,
+      155,
+      28
+     ],
+     "label": "step 3"
+    },
+    {
+     "at": 2.08,
+     "rect": [
+      679,
+      4256,
+      290,
+      56
+     ],
+     "label": "/apply"
+    }
+   ]
+  },
+  {
+   "id": "review",
+   "phase": "screen",
+   "footage": "readme_rec2",
+   "url": "github.com/MadsLorentzen/ai-job-search",
+   "end": 25.95,
+   "transition": "continue",
+   "cam": [
+    [
+     0.4,
+     2.05,
+     835,
+     4380
+    ],
+    [
+     1.3,
+     2.18,
+     850,
+     4400
+    ],
+    [
+     2.05,
+     2.11,
+     845,
+     4395
+    ]
+   ],
+   "cursor": [
+    [
+     0.1,
+     1100,
+     4500
+    ],
+    [
+     0.7,
+     700,
+     4390,
+     "click"
+    ],
+    [
+     1.6,
+     840,
+     4420
+    ]
+   ],
+   "boxes": [
+    {
+     "at": 0.5,
+     "rect": [
+      680,
+      4374,
+      300,
+      58
+     ],
+     "color": "teal",
+     "label": "2nd agent reviews"
+    }
+   ]
+  },
+  {
+   "id": "results",
+   "phase": "screen",
+   "footage": "readme_rec2",
+   "url": "github.com/MadsLorentzen/ai-job-search",
+   "end": 30.72,
+   "transition": "punch",
+   "cam": [
+    [
+     0,
+     1.39,
+     700,
+     3200
+    ],
+    [
+     0.85,
+     1.45,
+     640,
+     3220
+    ],
+    [
+     1.3,
+     2.11,
+     420,
+     3436
+    ],
+    [
+     2.6,
+     2.11,
+     700,
+     3436
+    ],
+    [
+     3.6,
+     2.18,
+     1000,
+     3436
+    ],
+    [
+     4.77,
+     2.24,
+     1010,
+     3440
+    ]
+   ],
+   "cursor": [
+    [
+     1.2,
+     300,
+     3600
+    ],
+    [
+     1.3,
+     400,
+     3470
+    ],
+    [
+     2.7,
+     700,
+     3470
+    ],
+    [
+     3.7,
+     1000,
+     3470
+    ]
+   ],
+   "boxes": [
+    {
+     "at": 1.1,
+     "rect": [
+      214,
+      3418,
+      352,
+      38
+     ],
+     "color": "teal",
+     "label": "69 applications"
+    },
+    {
+     "at": 2.65,
+     "rect": [
+      572,
+      3418,
+      300,
+      38
+     ],
+     "color": "teal",
+     "label": "20 interviews"
+    },
+    {
+     "at": 3.65,
+     "rect": [
+      882,
+      3418,
+      232,
+      38
+     ],
+     "color": "teal",
+     "label": "1 contract"
+    }
+   ]
+  },
+  {
+   "id": "cta",
+   "phase": "cta",
+   "plate": "light",
+   "end": 34.75,
+   "transition": "whip",
+   "props": [
+    {
+     "src": "assets/dazz/sticker_cat.png",
+     "edge": "bottom",
+     "x": 1560,
+     "at": 0.9,
+     "size": 330,
+     "rot": -6,
+     "bubble": "send me the repo!",
+     "bubble_at": 0.4
+    }
+   ]
+  },
+  {
+   "id": "outro",
+   "phase": "outro",
+   "end": 35.6,
+   "transition": "cut"
+  }
+ ],
+ "cta": {
+  "comment_word": "JOBS"
+ }
+}

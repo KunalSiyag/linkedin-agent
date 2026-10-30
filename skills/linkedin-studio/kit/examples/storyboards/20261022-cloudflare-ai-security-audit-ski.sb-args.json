@@ -1,0 +1,792 @@
+{
+ "job_id": "20261022-cloudflare-ai-security-audit-ski",
+ "storyboard": {
+  "look": "land",
+  "fps": 60,
+  "day": 3,
+  "voice_offset": 0,
+  "captions": {
+   "max_chars": 44
+  },
+  "phrases": [
+   [
+    "three thousand",
+    "3,000"
+   ],
+   [
+    "day three",
+    "day 3"
+   ],
+   [
+    "day four",
+    "day 4"
+   ]
+  ],
+  "emphasis": [
+   "stop",
+   "checking",
+   "Cloudflare",
+   "day 3",
+   "npx",
+   "security audit this codebase",
+   "architecture",
+   "trust boundaries",
+   "disprove",
+   "never",
+   "verified report",
+   "free",
+   "MIT",
+   "3,000",
+   "AUDIT",
+   "day 4",
+   "Cloudflare's",
+   "auditor"
+  ],
+  "cta": {
+   "comment_word": "AUDIT"
+  },
+  "cover_time": 3.45,
+  "cover_text": [
+   "Cloudflare's AI security auditor"
+  ],
+  "cover_ig_center_x": 960,
+  "style": {
+   "bg_light": "#03060A",
+   "bg_dark": "#020406",
+   "bg_dark2": "#062431",
+   "ink": "#E8FBFF",
+   "white": "#E8FBFF",
+   "accent": "#3DF5FF",
+   "accent2": "#39FF88",
+   "sans": "Anton-Regular.ttf",
+   "sans_bold": "Anton-Regular.ttf",
+   "sans_semi": "JetBrainsMono-Medium.ttf",
+   "serif": "Anton-Regular.ttf",
+   "serif_italic": "Anton-Regular.ttf",
+   "mono": "JetBrainsMono-Medium.ttf",
+   "caption_bold": "JetBrainsMono-Medium.ttf",
+   "upper": true,
+   "type_on": true,
+   "type_cps": 28,
+   "glow": true,
+   "glow_alpha": 0.85,
+   "squiggle": false,
+   "scan": true,
+   "scan_alpha": 55,
+   "grid_color": "#3DF5FF",
+   "grid_alpha": 30,
+   "label_ink": "#021014",
+   "h1_label": "> ./interrupt --stop",
+   "h2_label": "> cat day_03.log",
+   "win_radius": 10,
+   "h1": 124,
+   "h1_min": 80,
+   "tracking": 0.0,
+   "caption": 42,
+   "hook_y": 250,
+   "cover_handle_y": 890
+  },
+  "sfx_auto": {
+   "line_dur": 0.42,
+   "events": {
+    "line": {
+     "pool": [
+      "keyboard_typing_fast_loop_04.wav"
+     ],
+     "lufs": -25
+    }
+   }
+  },
+  "scenes": [
+   {
+    "id": "h1",
+    "phase": "hook",
+    "project": true,
+    "plate": "dark",
+    "end": 0.82,
+    "footage": "repo",
+    "cam": [
+     0,
+     0.16,
+     0.047
+    ],
+    "zoom": 2.4,
+    "glitch_in": 0.5,
+    "sfx": [
+     {
+      "file": "/workspace/video-studio/assets/sfx/library/glitch_datanoise_03.wav",
+      "gain": 0.55,
+      "offset": 0.0
+     },
+     {
+      "file": "/workspace/video-studio/assets/sfx/library/impact_sub_boom_01.wav",
+      "gain": 0.6,
+      "offset": 0.0
+     }
+    ]
+   },
+   {
+    "id": "h2",
+    "phase": "hook",
+    "project": true,
+    "plate": "dark",
+    "end": 1.6,
+    "footage": "repo",
+    "cam": [
+     0,
+     0.27,
+     0.151
+    ],
+    "zoom": 2.0,
+    "transition": "glitch"
+   },
+   {
+    "id": "f1",
+    "phase": "hook",
+    "end": 1.95,
+    "footage": "hacker",
+    "footage_start": 4.0
+   },
+   {
+    "id": "h3",
+    "phase": "hook",
+    "project": true,
+    "plate": "dark",
+    "end": 2.75,
+    "footage": "trending",
+    "cam": [
+     0,
+     0.5,
+     0.48
+    ],
+    "zoom": 1.6,
+    "transition": "glitch"
+   },
+   {
+    "id": "f2",
+    "phase": "hook",
+    "end": 3.1,
+    "footage": "code",
+    "footage_start": 3.0
+   },
+   {
+    "id": "h4",
+    "phase": "hook",
+    "project": true,
+    "plate": "dark",
+    "end": 3.64,
+    "footage": "repo",
+    "cam": [
+     0,
+     0.32,
+     0.24
+    ],
+    "zoom": 1.8,
+    "transition": "flash"
+   },
+   {
+    "id": "intro",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/cloudflare/security-audit-skill",
+    "end": 8.85,
+    "transition": "glitch",
+    "cam": [
+     [
+      0,
+      1.0,
+      1080,
+      700
+     ],
+     [
+      0.9,
+      1.5,
+      860,
+      1000
+     ],
+     [
+      2.5,
+      1.75,
+      830,
+      1100
+     ],
+     [
+      5.2,
+      1.8,
+      830,
+      1105
+     ]
+    ],
+    "cursor": [
+     [
+      0.3,
+      1500,
+      900
+     ],
+     [
+      1.0,
+      600,
+      998,
+      "click"
+     ],
+     [
+      2.6,
+      720,
+      1130,
+      "click"
+     ],
+     [
+      4.6,
+      760,
+      1140
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 1.05,
+      "rect": [
+       210,
+       972,
+       735,
+       52
+      ],
+      "label": "turns your agent into a security auditor"
+     },
+     {
+      "at": 2.7,
+      "rect": [
+       430,
+       1104,
+       590,
+       52
+      ],
+      "color": "teal",
+      "label": "seeded Cloudflare's own harness"
+     }
+    ]
+   },
+   {
+    "id": "day",
+    "phase": "title",
+    "daycard": true,
+    "plate": "dark",
+    "label": "DAY_03",
+    "end": 10.66,
+    "transition": "zoomblur"
+   },
+   {
+    "id": "install",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/cloudflare/security-audit-skill#installation",
+    "end": 12.8,
+    "transition": "glitch",
+    "cam": [
+     [
+      0,
+      1.3,
+      800,
+      4060
+     ],
+     [
+      0.6,
+      2.1,
+      700,
+      4185
+     ],
+     [
+      2.14,
+      2.15,
+      700,
+      4188
+     ]
+    ],
+    "cursor": [
+     [
+      0.2,
+      1200,
+      4400
+     ],
+     [
+      0.75,
+      300,
+      4185,
+      "click"
+     ],
+     [
+      1.9,
+      700,
+      4200
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.8,
+      "rect": [
+       230,
+       4146,
+       845,
+       76
+      ],
+      "label": "one npx command"
+     }
+    ]
+   },
+   {
+    "id": "usage",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/cloudflare/security-audit-skill#usage",
+    "end": 15.95,
+    "transition": "continue",
+    "cam": [
+     [
+      0.9,
+      2.1,
+      700,
+      4740
+     ],
+     [
+      3.15,
+      2.2,
+      700,
+      4742
+     ]
+    ],
+    "cursor": [
+     [
+      0.4,
+      700,
+      4400
+     ],
+     [
+      1.3,
+      400,
+      4745,
+      "click"
+     ],
+     [
+      2.6,
+      560,
+      4750
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 1.35,
+      "rect": [
+       228,
+       4720,
+       374,
+       48
+      ],
+      "color": "teal",
+      "label": "just ask your agent"
+     }
+    ]
+   },
+   {
+    "id": "recon",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/cloudflare/security-audit-skill",
+    "end": 18.95,
+    "transition": "continue",
+    "cam": [
+     [
+      0.9,
+      1.9,
+      820,
+      1440,
+      "arc",
+      0.45
+     ],
+     [
+      3.0,
+      2.0,
+      820,
+      1440
+     ]
+    ],
+    "cursor": [
+     [
+      0.5,
+      1000,
+      1700
+     ],
+     [
+      1.2,
+      360,
+      1415,
+      "click"
+     ],
+     [
+      2.6,
+      700,
+      1430
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 1.2,
+      "rect": [
+       255,
+       1390,
+       1215,
+       82
+      ],
+      "label": "01 recon: architecture + trust boundaries"
+     }
+    ]
+   },
+   {
+    "id": "hunt",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/cloudflare/security-audit-skill",
+    "end": 24.02,
+    "transition": "continue",
+    "cam": [
+     [
+      0.5,
+      1.85,
+      820,
+      1520
+     ],
+     [
+      2.3,
+      1.85,
+      820,
+      1580
+     ],
+     [
+      5.07,
+      1.9,
+      820,
+      1585
+     ]
+    ],
+    "cursor": [
+     [
+      0.3,
+      700,
+      1450
+     ],
+     [
+      0.7,
+      400,
+      1497,
+      "click"
+     ],
+     [
+      2.4,
+      400,
+      1575,
+      "click"
+     ],
+     [
+      4.6,
+      600,
+      1590
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.75,
+      "rect": [
+       255,
+       1472,
+       1215,
+       74
+      ],
+      "label": "02 hunters attack the code"
+     },
+     {
+      "at": 2.45,
+      "rect": [
+       255,
+       1550,
+       1215,
+       44
+      ],
+      "color": "teal",
+      "label": "03 fresh verifier tries to disprove"
+     }
+    ]
+   },
+   {
+    "id": "never",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/cloudflare/security-audit-skill#design-principles",
+    "end": 26.87,
+    "transition": "continue",
+    "cam": [
+     [
+      0.85,
+      2.0,
+      760,
+      5755,
+      "arc",
+      0.5
+     ],
+     [
+      2.85,
+      2.1,
+      760,
+      5757
+     ]
+    ],
+    "cursor": [
+     [
+      0.4,
+      900,
+      3000
+     ],
+     [
+      1.1,
+      560,
+      5760,
+      "click"
+     ],
+     [
+      2.5,
+      900,
+      5765
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 1.1,
+      "rect": [
+       255,
+       5733,
+       1010,
+       52
+      ],
+      "color": "teal",
+      "label": "checker != finder"
+     }
+    ]
+   },
+   {
+    "id": "report",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/cloudflare/security-audit-skill",
+    "end": 28.6,
+    "transition": "glitch",
+    "cam": [
+     [
+      0,
+      1.7,
+      820,
+      1740
+     ],
+     [
+      1.73,
+      1.85,
+      820,
+      1760
+     ]
+    ],
+    "cursor": [
+     [
+      0.15,
+      900,
+      1900
+     ],
+     [
+      0.5,
+      400,
+      1780,
+      "click"
+     ],
+     [
+      1.5,
+      600,
+      1790
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.5,
+      "rect": [
+       255,
+       1755,
+       1215,
+       74
+      ],
+      "label": "06 verified report"
+     }
+    ]
+   },
+   {
+    "id": "mit",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/cloudflare/security-audit-skill",
+    "end": 30.3,
+    "transition": "glitch",
+    "cam": [
+     [
+      0,
+      1.3,
+      1150,
+      540
+     ],
+     [
+      1.7,
+      1.38,
+      1150,
+      560
+     ]
+    ],
+    "cursor": [
+     [
+      0.15,
+      1300,
+      700
+     ],
+     [
+      0.5,
+      880,
+      795,
+      "click"
+     ],
+     [
+      1.5,
+      1000,
+      700
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.5,
+      "rect": [
+       810,
+       768,
+       150,
+       56
+      ],
+      "label": "MIT, free"
+     },
+     {
+      "at": 0.9,
+      "rect": [
+       1830,
+       280,
+       150,
+       58
+      ],
+      "color": "teal",
+      "label": "38.2k stars"
+     }
+    ]
+   },
+   {
+    "id": "proof",
+    "phase": "screen",
+    "footage": "trending",
+    "url": "github.com/trending",
+    "end": 33.38,
+    "transition": "glitch",
+    "cam": [
+     [
+      0,
+      1.15,
+      1080,
+      1050
+     ],
+     [
+      1.0,
+      1.5,
+      1080,
+      1200
+     ],
+     [
+      1.9,
+      2.3,
+      1650,
+      1280
+     ],
+     [
+      3.08,
+      2.35,
+      1660,
+      1282
+     ]
+    ],
+    "cursor": [
+     [
+      0.3,
+      1500,
+      800
+     ],
+     [
+      0.9,
+      700,
+      1170,
+      "click"
+     ],
+     [
+      2.0,
+      1590,
+      1290,
+      "click"
+     ],
+     [
+      2.9,
+      1850,
+      1330
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.9,
+      "rect": [
+       340,
+       1120,
+       1470,
+       210
+      ],
+      "label": "github trending, today"
+     },
+     {
+      "at": 2.0,
+      "rect": [
+       1605,
+       1258,
+       200,
+       50
+      ],
+      "color": "teal",
+      "label": "+2,979 stars today"
+     }
+    ]
+   },
+   {
+    "id": "cta",
+    "phase": "cta",
+    "plate": "dark",
+    "end": 36.9,
+    "transition": "zoomblur"
+   },
+   {
+    "id": "outro",
+    "phase": "outro",
+    "end": 37.8,
+    "transition": "glitch"
+   }
+  ],
+  "music": {
+   "file": "audio/music.mp3",
+   "drop_at": 48.25
+  },
+  "replace": {
+   "github": "GitHub",
+   "cloudflare": "Cloudflare",
+   "cloudflare's": "Cloudflare's"
+  }
+ }
+}

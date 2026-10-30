@@ -1,6 +1,6 @@
 ---
 name: linkedin-studio
-description: "Owner's LinkedIn studio: post and comment drafts from real public work, strict career guardrails, independent critic, visuals (carousels, code cards), videos (screen recordings of public pages such as trending GitHub repos, motion videos), voice-note ideas, morning digest, weekly opportunities. Use for anything about LinkedIn posts, comments, ideas, visuals, videos or recordings, voice notes, the digest or opportunities."
+description: "Owner's LinkedIn studio: post and comment drafts from real public work, strict career guardrails, independent critic, visuals (carousels, code cards), videos (narrated video-kit videos with captures, voice and music; screen recordings of public pages such as trending GitHub repos), voice-note ideas, morning digest, weekly opportunities. Use for anything about LinkedIn posts, comments, ideas, visuals, videos or recordings, voice notes, the digest or opportunities."
 version: 1.0.0
 author: KunalSiyag
 license: MIT
@@ -88,41 +88,30 @@ never say what the post couldn't.
 - **Chart** (`chart ID --file data.json`): bars for test-drive results (speed, cost, pass rate). Values come straight
   from the lab fact sheet; the title states what was measured, not a verdict.
 - **Title card** (`card ID --title "first line" --sub "..."`): only when nothing better exists.
-- **Video** (see Videos): the best fit for a demo, a repo tour or a "found this on GitHub" post.
+- **Video** (see Videos, made with the video kit): the best fit for a demo, a repo tour or a "found this on GitHub" post.
 You can't look at images (the studio's models have no vision), so don't try to open or analyse the PNGs. `visuals.py`
 prints the text size each slide ended up at: fix any slide marked "dense" or "OVERFLOW" by cutting words or splitting
 it, then run it again. Files are numbered, nothing is overwritten; `visuals.py list ID` shows them.
 
 ## Videos
 
-You have a computer for video: the studio computer, a sandboxed headless browser plus ffmpeg running as its own user.
-`python3 SKILL_DIR/scripts/video.py` sends it jobs. It records real public pages and renders motion videos (titles,
-points, stats, code, charts, clips) with the motion design built in. You write the content; it does the timing,
-easing and layout. **When the owner asks for a recording or a video, make it. Don't tell them you can't.**
+Videos are made with the owner's video kit: narrated 16:9 videos with real captures, captions, a rotating
+motion-graphic look, music and SFX, and automatic QA. **Read `SKILL_DIR/references/video-kit.md` and follow it for
+every video.** **When the owner asks for a recording or a video, make it. Don't tell them you can't.**
 
-1. **Record** the page the post is about (allowed sites: GitHub, Hugging Face, dev.to, Hacker News, plus any the owner
-   added in `profile/studio.json` "video": {"allow_domains": [...]}):
-   `video.py record --url https://github.com/OWNER/REPO`
-   With no plan, a GitHub repo gets the standard tour: header, a ring around the star count, a slow read of the
-   README. For a specific story, write `$LINKEDIN_HOME/tmp/<name>-plan.json` (verbs in the script's help: `wait`,
-   `scroll`, `read`, `highlight`, `zoom`, `click`, `open`). Target elements by visible `text` (a heading or link
-   label from the fact sheet's README) rather than guessing CSS selectors. Keep it 15-30 s. `--device mobile`
-   records a phone-width page for vertical videos.
-   It prints a clip id, the seconds recorded and notes such as "highlight: 'Install' not found; skipped". Fix the
-   plan and record again if a step you needed was skipped. A clip whose page showed a blocked term can't be used.
-2. **Storyboard** in `$LINKEDIN_HOME/tmp/<name>-story.json`: 3-7 scenes, 20-60 s total. A strong default:
-   `title` (the hook, at most ~10 words) → `clip` (the recording, with a caption saying what to notice) → `points`
-   or `code` (what it does, 3 short points) → `stat` (one number from the facts) → `end` (where the link is).
-   Captions and points are short lines, not sentences from the post. Use `**bold**` for the one word that matters.
-   Leave out `seconds`: timing comes from reading speed and clip length.
-3. **Render** for the draft: `video.py make ID --file STORY.json`. Every word on screen goes through the same linter
-   as the post, with the draft's facts (`stat` values and chart numbers too). Fix each BLOCK and run again.
-4. Renders take 1-5 minutes. The command waits about 2.5 minutes; if it prints "still rendering", run
-   `video.py wait JOB` (you can tell the owner it's rendering first). Never start the same job twice.
-5. It reports each scene's text size: fix any scene marked "dense" or "OVERFLOW" by cutting words, then render again.
-   Send the owner the `MEDIA:` line it prints (the MP4, sized to fit Discord) with the draft. The poster frame and a
-   contact sheet are saved next to it for the owner.
-Vertical (`"size": "vertical"`) suits a phone-first clip; LinkedIn's feed favours `landscape` or `square` for demos.
+You have a computer for this: the studio computer, a sandboxed headless browser plus ffmpeg running as its own user.
+`python3 SKILL_DIR/scripts/video.py` sends it jobs:
+- `video.py kit TOOL '<json>'` runs one kit step (create_job needs `--draft ID`). See video-kit.md for the order.
+- `video.py record --url URL [--plan PLAN.json]` records a real public page as a smooth screen recording (allowed
+  sites: GitHub, Hugging Face, dev.to, Hacker News, plus "video": {"allow_domains": [...]} in `profile/studio.json`).
+  A GitHub repo gets a standard tour without a plan; for a story, write `$LINKEDIN_HOME/tmp/<name>-plan.json` (verbs
+  in the script's help: `wait`, `scroll`, `read`, `highlight`, `zoom`, `click`, `open`, targeting visible `text`).
+  It prints a clip id; use it in the kit as `add_footage {"job_id", "clip": "c-...", "label", "license"}`. A clip whose
+  page showed a blocked term can't be used.
+- `video.py wait JOB` keeps waiting for a long job (never start the same job twice); `video.py status`, `video.py clips`.
+- `video.py make ID --file STORY.json` is the old silent motion video (title/points/stat/code/chart scenes); use it
+  only when the owner asks for a quick video without voice.
+Send the owner the `MEDIA:` line a render prints (the MP4, sized to fit Discord) with the draft.
 Someone else's repo is credited by name in the post and never presented as the owner's work.
 
 ## Model test-drives

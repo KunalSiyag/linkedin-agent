@@ -1,0 +1,109 @@
+{
+ "_note": "Superseded: lib/sfx_auto.py now auto-places library SFX on dazz events (pools, LUFS targets, per-job 'sfx_auto' override; see references/storyboard.md). Kept for reference.",
+ "cursor_click": {
+  "file": "mouse_click_mouse_01.wav",
+  "alt": [
+   "mouse_click_soft_02.wav"
+  ],
+  "name": "click",
+  "gain": 0.35,
+  "offset": -0.01
+ },
+ "highlight_draw": {
+  "file": "whoosh_short_swish_03.wav",
+  "alt": [
+   "scroll_tick_tick_03.wav",
+   "paper_slide_card_slide_03.wav"
+  ],
+  "name": "highlight",
+  "gain": 0.12,
+  "offset": 0.0
+ },
+ "sticker_pop": {
+  "file": "sticker_pop_spring_02.wav",
+  "alt": [
+   "text_pop_bubble_01.wav",
+   "sticker_pop_boing_03.wav"
+  ],
+  "name": "pop",
+  "gain": 0.16,
+  "offset": 0.0
+ },
+ "typing": {
+  "file": "keyboard_typing_mech_loop_02.wav",
+  "alt": [
+   "keyboard_typing_modelm_loop_01.wav"
+  ],
+  "name": "typing",
+  "gain": 0.08,
+  "offset": 0.05,
+  "loop_to_text_duration": true
+ },
+ "paper_tear": {
+  "file": "paper_tear_rip_01.wav",
+  "alt": [
+   "paper_tear_crackle_04.wav",
+   "paper_tear_tape_rip_02.wav"
+  ],
+  "name": "paper-tear",
+  "gain": 0.26,
+  "offset": -0.06
+ },
+ "slice_transition": {
+  "file": "whoosh_short_mega_02.wav",
+  "alt": [
+   "whoosh_short_swosh_01.wav"
+  ],
+  "name": "whoosh",
+  "gain": 0.1,
+  "offset": -0.12
+ },
+ "day_card_in": {
+  "file": "paper_slide_bookflip_01.wav",
+  "alt": [
+   "impact_punch_03.wav"
+  ],
+  "name": "day-card",
+  "gain": 0.18,
+  "offset": 0.0
+ },
+ "hook_to_body": {
+  "file": "riser_noise_2s_01.wav",
+  "then": "impact_sub_boom_01.wav",
+  "name": "riser",
+  "gain": 0.1,
+  "offset": "end aligned to cut"
+ },
+ "cta": {
+  "file": "notification_ding_confirm_01.wav",
+  "alt": [
+   "cash_success_chime_03.wav"
+  ],
+  "name": "cta",
+  "gain": 0.18,
+  "offset": 0.0,
+  "plus": {
+   "file": "paper_tear_rip_01.wav",
+   "note": "torn-strip CTA reveal"
+  }
+ },
+ "stat_reveal": {
+  "file": "cash_success_coins_02.wav",
+  "alt": [
+   "impact_punch_03.wav"
+  ],
+  "gain": 0.15
+ },
+ "screenshot_capture": {
+  "file": "camera_shutter_dslr_01.wav",
+  "gain": 0.2
+ },
+ "error_or_before": {
+  "file": "error_buzz_error_03.wav",
+  "gain": 0.15
+ },
+ "glitch_cut": {
+  "file": "glitch_stutter_01.wav",
+  "gain": 0.12
+ }
+}

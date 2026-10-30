@@ -1,0 +1,699 @@
+{
+ "job_id": "20261020-ai-job-search-dazz",
+ "storyboard": {
+  "look": "dazz",
+  "fps": 60,
+  "day": 1,
+  "voice_offset": 0,
+  "captions": {
+   "max_words": 5,
+   "max_chars": 22
+  },
+  "phrases": [
+   [
+    "number one",
+    "#1"
+   ],
+   [
+    "day one",
+    "day 1"
+   ],
+   [
+    "day two",
+    "day 2"
+   ],
+   [
+    "step one",
+    "step 1"
+   ],
+   [
+    "step two",
+    "step 2"
+   ],
+   [
+    "step three",
+    "step 3"
+   ],
+   [
+    "AI Job Search",
+    "AI Job Search"
+   ],
+   [
+    "Claude Code",
+    "Claude Code"
+   ],
+   [
+    "sixty-nine",
+    "69"
+   ],
+   [
+    "twenty interviews",
+    "20 interviews"
+   ],
+   [
+    "one signed contract",
+    "1 signed contract"
+   ]
+  ],
+  "emphasis": [
+   "hired",
+   "#1",
+   "day 1",
+   "AI Job Search",
+   "69",
+   "20 interviews",
+   "1 signed contract",
+   "day 2",
+   "caption"
+  ],
+  "music": {
+   "file": "audio/music.mp3",
+   "gain": 0.34,
+   "duck_db": 4.0,
+   "start": 0.0,
+   "ramp": 0.2,
+   "min_over_db": 8.3
+  },
+  "qa": {
+   "voice_over_bed_min": 8,
+   "voice_over_bed_target": [
+    8,
+    10.5
+   ]
+  },
+  "cover_time": 0.55,
+  "cover_text": [
+   "this AI got him hired"
+  ],
+  "scenes": [
+   {
+    "id": "h1",
+    "phase": "hook",
+    "end": 1.0,
+    "footage": "tunnel",
+    "footage_start": 1.0
+   },
+   {
+    "id": "h2",
+    "phase": "hook",
+    "end": 1.8,
+    "footage": "maze",
+    "footage_start": 2.0
+   },
+   {
+    "id": "h3",
+    "phase": "hook",
+    "end": 3.05,
+    "footage": "ink",
+    "footage_start": 8.0
+   },
+   {
+    "id": "h5",
+    "phase": "hook",
+    "end": 4.62,
+    "footage": "cubes",
+    "footage_start": 3.0
+   },
+   {
+    "id": "day",
+    "phase": "plate",
+    "plate": "paper",
+    "daycard": true,
+    "end": 8.25,
+    "transition": "tear"
+   },
+   {
+    "id": "trend",
+    "phase": "screen",
+    "footage": "trending_rec",
+    "url": "github.com/trending",
+    "end": 10.38,
+    "transition": "tear",
+    "cam": [
+     [
+      0,
+      1.0,
+      1080,
+      700
+     ],
+     [
+      0.55,
+      1.0,
+      1080,
+      700
+     ],
+     [
+      1.25,
+      1.55,
+      1060,
+      680
+     ],
+     [
+      2.13,
+      2.25,
+      820,
+      650
+     ]
+    ],
+    "cursor": [
+     [
+      0.45,
+      1750,
+      1150
+     ],
+     [
+      1.2,
+      1250,
+      760
+     ],
+     [
+      1.55,
+      640,
+      624,
+      "click"
+     ],
+     [
+      2.13,
+      660,
+      640
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.95,
+      "rect": [
+       330,
+       585,
+       1462,
+       180
+      ]
+     },
+     {
+      "at": 1.5,
+      "rect": [
+       1640,
+       716,
+       152,
+       38
+      ],
+      "color": "pink"
+     }
+    ]
+   },
+   {
+    "id": "repo",
+    "phase": "screen",
+    "footage": "readme_rec2",
+    "url": "github.com/MadsLorentzen/ai-job-search",
+    "end": 13.12,
+    "transition": "halftone",
+    "cam": [
+     [
+      0.0,
+      1.3,
+      1300,
+      560
+     ],
+     [
+      0.62,
+      2.6,
+      1760,
+      540
+     ],
+     [
+      1.52,
+      3.0,
+      1780,
+      520
+     ],
+     [
+      2.32,
+      3.0,
+      1760,
+      500
+     ]
+    ],
+    "cursor": [
+     [
+      0.12,
+      1300,
+      800
+     ],
+     [
+      0.67,
+      1760,
+      545
+     ],
+     [
+      1.52,
+      1640,
+      470
+     ],
+     [
+      2.22,
+      1700,
+      500
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.72,
+      "rect": [
+       1713,
+       525,
+       235,
+       33
+      ]
+     },
+     {
+      "at": 1.47,
+      "rect": [
+       1580,
+       452,
+       385,
+       74
+      ],
+      "color": "pink"
+     }
+    ]
+   },
+   {
+    "id": "step1",
+    "phase": "screen",
+    "footage": "readme_rec2",
+    "url": "github.com/MadsLorentzen/ai-job-search",
+    "end": 15.68,
+    "transition": "continue",
+    "cam": [
+     [
+      0.73,
+      3.3,
+      330,
+      4110,
+      "arc",
+      0.4
+     ],
+     [
+      1.48,
+      3.4,
+      320,
+      4150
+     ],
+     [
+      2.18,
+      3.4,
+      330,
+      4160
+     ]
+    ],
+    "cursor": [
+     [
+      0.18,
+      1100,
+      4300
+     ],
+     [
+      0.63,
+      275,
+      4064,
+      "click"
+     ],
+     [
+      1.18,
+      320,
+      4165
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.48,
+      "rect": [
+       240,
+       4050,
+       72,
+       28
+      ]
+     },
+     {
+      "at": 0.93,
+      "rect": [
+       238,
+       4138,
+       156,
+       56
+      ]
+     }
+    ]
+   },
+   {
+    "id": "step2",
+    "phase": "screen",
+    "footage": "readme_rec2",
+    "url": "github.com/MadsLorentzen/ai-job-search",
+    "end": 20.02,
+    "transition": "continue",
+    "cam": [
+     [
+      0.62,
+      3.3,
+      500,
+      4110
+     ],
+     [
+      1.92,
+      3.4,
+      500,
+      4160
+     ],
+     [
+      2.92,
+      3.3,
+      530,
+      4270
+     ],
+     [
+      3.92,
+      3.3,
+      540,
+      4280
+     ]
+    ],
+    "cursor": [
+     [
+      0.32,
+      600,
+      4250
+     ],
+     [
+      1.07,
+      470,
+      4064,
+      "click"
+     ],
+     [
+      1.92,
+      500,
+      4170
+     ],
+     [
+      3.02,
+      520,
+      4290
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 1.12,
+      "rect": [
+       430,
+       4050,
+       92,
+       28
+      ]
+     },
+     {
+      "at": 1.92,
+      "rect": [
+       421,
+       4138,
+       130,
+       56
+      ]
+     },
+     {
+      "at": 3.02,
+      "rect": [
+       421,
+       4256,
+       205,
+       56
+      ]
+     }
+    ]
+   },
+   {
+    "id": "step3",
+    "phase": "screen",
+    "footage": "readme_rec2",
+    "url": "github.com/MadsLorentzen/ai-job-search",
+    "end": 23.9,
+    "transition": "continue",
+    "cam": [
+     [
+      0.58,
+      3.2,
+      780,
+      4110
+     ],
+     [
+      1.58,
+      3.3,
+      780,
+      4100
+     ],
+     [
+      2.38,
+      3.2,
+      830,
+      4270
+     ],
+     [
+      3.48,
+      3.3,
+      840,
+      4280
+     ]
+    ],
+    "cursor": [
+     [
+      0.28,
+      1000,
+      4300
+     ],
+     [
+      1.38,
+      770,
+      4064,
+      "click"
+     ],
+     [
+      2.28,
+      830,
+      4275
+     ],
+     [
+      3.38,
+      900,
+      4300
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 1.43,
+      "rect": [
+       690,
+       4050,
+       155,
+       28
+      ]
+     },
+     {
+      "at": 2.08,
+      "rect": [
+       679,
+       4256,
+       290,
+       56
+      ]
+     }
+    ]
+   },
+   {
+    "id": "review",
+    "phase": "screen",
+    "footage": "readme_rec2",
+    "url": "github.com/MadsLorentzen/ai-job-search",
+    "end": 25.95,
+    "transition": "continue",
+    "cam": [
+     [
+      0.4,
+      3.1,
+      835,
+      4380
+     ],
+     [
+      1.3,
+      3.3,
+      850,
+      4400
+     ],
+     [
+      2.05,
+      3.2,
+      845,
+      4395
+     ]
+    ],
+    "cursor": [
+     [
+      0.1,
+      1100,
+      4500
+     ],
+     [
+      0.7,
+      700,
+      4390,
+      "click"
+     ],
+     [
+      1.6,
+      840,
+      4420
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.5,
+      "rect": [
+       680,
+       4374,
+       300,
+       58
+      ],
+      "color": "pink"
+     }
+    ]
+   },
+   {
+    "id": "results",
+    "phase": "screen",
+    "footage": "readme_rec2",
+    "url": "github.com/MadsLorentzen/ai-job-search",
+    "end": 30.72,
+    "transition": "slice",
+    "label_color": "pink",
+    "cam": [
+     [
+      0,
+      2.1,
+      700,
+      3200
+     ],
+     [
+      0.85,
+      2.2,
+      640,
+      3220
+     ],
+     [
+      1.3,
+      3.2,
+      420,
+      3436
+     ],
+     [
+      2.6,
+      3.2,
+      700,
+      3436
+     ],
+     [
+      3.6,
+      3.3,
+      1000,
+      3436
+     ],
+     [
+      4.77,
+      3.4,
+      1010,
+      3440
+     ]
+    ],
+    "cursor": [
+     [
+      1.2,
+      300,
+      3600
+     ],
+     [
+      1.3,
+      400,
+      3470
+     ],
+     [
+      2.7,
+      700,
+      3470
+     ],
+     [
+      3.7,
+      1000,
+      3470
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 1.1,
+      "rect": [
+       214,
+       3418,
+       352,
+       38
+      ],
+      "color": "pink"
+     },
+     {
+      "at": 2.65,
+      "rect": [
+       572,
+       3418,
+       300,
+       38
+      ],
+      "color": "pink"
+     },
+     {
+      "at": 3.65,
+      "rect": [
+       882,
+       3418,
+       232,
+       38
+      ],
+      "color": "pink"
+     }
+    ]
+   },
+   {
+    "id": "cta",
+    "phase": "plate",
+    "plate": "paper",
+    "stack": true,
+    "end": 34.1,
+    "transition": "tear_close",
+    "stickers": [
+     {
+      "name": "cat",
+      "at": 0.75,
+      "x": 780,
+      "y": 1300,
+      "size": 360,
+      "rot": -8
+     },
+     {
+      "name": "star",
+      "at": 2.45,
+      "x": 270,
+      "y": 1270,
+      "size": 210,
+      "rot": 10
+     }
+    ],
+    "strip_size": 78
+   }
+  ]
+ }
+}

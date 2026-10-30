@@ -1,0 +1,673 @@
+{
+ "job_id": "20261021-free-local-ai-voice-studio-voice",
+ "storyboard": {
+  "look": "land",
+  "fps": 60,
+  "day": 2,
+  "voice_offset": 0,
+  "captions": {
+   "max_chars": 40
+  },
+  "phrases": [
+   [
+    "Six hundred forty-six",
+    "646"
+   ],
+   [
+    "six hundred forty-six",
+    "646"
+   ],
+   [
+    "Seventeen thousand",
+    "17,000"
+   ],
+   [
+    "day two",
+    "day 2"
+   ],
+   [
+    "day three",
+    "day 3"
+   ],
+   [
+    "three seconds",
+    "3 seconds"
+   ],
+   [
+    "open-source",
+    "open-source"
+   ]
+  ],
+  "emphasis": [
+   "free",
+   "laptop",
+   "day 2",
+   "VoiceStudio",
+   "3 seconds",
+   "clones",
+   "designs",
+   "dubs",
+   "646",
+   "never leaves",
+   "17,000",
+   "GitHub",
+   "permission",
+   "VOICE",
+   "day 3"
+  ],
+  "cta": {
+   "comment_word": "VOICE"
+  },
+  "cover_time": 0.6,
+  "cover_text": [
+   "free AI voices"
+  ],
+  "cover_ig_center_x": 960,
+  "scenes": [
+   {
+    "id": "p1",
+    "phase": "hook",
+    "project": true,
+    "end": 0.85,
+    "footage": "site",
+    "cam": [
+     0,
+     0.5,
+     0.095
+    ],
+    "zoom": 1.6
+   },
+   {
+    "id": "f1",
+    "phase": "hook",
+    "end": 1.2,
+    "footage": "wave1",
+    "footage_start": 3.0
+   },
+   {
+    "id": "p2",
+    "phase": "hook",
+    "project": true,
+    "end": 2.1,
+    "footage": "app_voicedesign",
+    "cam": [
+     0,
+     0.45,
+     0.3
+    ],
+    "zoom": 1.2
+   },
+   {
+    "id": "p3",
+    "phase": "hook",
+    "project": true,
+    "end": 2.95,
+    "footage": "app_dubbing",
+    "cam": [
+     0,
+     0.6,
+     0.42
+    ],
+    "zoom": 1.4
+   },
+   {
+    "id": "f2",
+    "phase": "hook",
+    "end": 3.3,
+    "footage": "wave2",
+    "footage_start": 2.0
+   },
+   {
+    "id": "p4",
+    "phase": "hook",
+    "project": true,
+    "end": 4.15,
+    "footage": "trending",
+    "cam": [
+     0,
+     0.49,
+     0.57
+    ],
+    "zoom": 1.4
+   },
+   {
+    "id": "p5",
+    "phase": "hook",
+    "project": true,
+    "end": 4.93,
+    "footage": "site",
+    "cam": [
+     0,
+     0.5,
+     0.31
+    ],
+    "zoom": 1.25
+   },
+   {
+    "id": "day",
+    "phase": "title",
+    "daycard": true,
+    "plate": "light",
+    "label": "DAY_02",
+    "end": 8.68,
+    "transition": "tear"
+   },
+   {
+    "id": "clone",
+    "phase": "screen",
+    "footage": "app_voicecloning",
+    "url": "VoiceStudio \u00b7 Voice cloning",
+    "end": 11.25,
+    "transition": "whip",
+    "cam": [
+     [
+      0,
+      1.15,
+      760,
+      420
+     ],
+     [
+      0.8,
+      1.7,
+      1000,
+      230
+     ],
+     [
+      1.7,
+      1.55,
+      1000,
+      700,
+      "arc",
+      0.25
+     ],
+     [
+      2.5,
+      1.6,
+      1050,
+      740
+     ]
+    ],
+    "cursor": [
+     [
+      0.25,
+      900,
+      520
+     ],
+     [
+      0.85,
+      1210,
+      98,
+      "click"
+     ],
+     [
+      1.75,
+      1107,
+      838,
+      "click"
+     ],
+     [
+      2.4,
+      1130,
+      850
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.9,
+      "rect": [
+       1150,
+       80,
+       140,
+       36
+      ],
+      "label": "3 s voice sample"
+     },
+     {
+      "at": 1.8,
+      "rect": [
+       1002,
+       817,
+       210,
+       44
+      ],
+      "color": "teal",
+      "label": "clone it"
+     }
+    ]
+   },
+   {
+    "id": "design",
+    "phase": "screen",
+    "footage": "app_voicedesign",
+    "url": "VoiceStudio \u00b7 Voice design",
+    "end": 14.12,
+    "transition": "punch",
+    "cam": [
+     [
+      0,
+      1.2,
+      720,
+      450
+     ],
+     [
+      0.55,
+      1.85,
+      330,
+      260
+     ],
+     [
+      1.7,
+      1.6,
+      760,
+      300
+     ],
+     [
+      2.8,
+      1.65,
+      780,
+      300
+     ]
+    ],
+    "cursor": [
+     [
+      0.2,
+      600,
+      520
+     ],
+     [
+      0.65,
+      214,
+      225,
+      "click"
+     ],
+     [
+      1.85,
+      827,
+      255,
+      "click"
+     ],
+     [
+      2.6,
+      860,
+      270
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.7,
+      "rect": [
+       75,
+       179,
+       280,
+       96
+      ],
+      "label": "describe it"
+     },
+     {
+      "at": 1.9,
+      "rect": [
+       500,
+       180,
+       410,
+       90
+      ],
+      "color": "teal",
+      "label": "designed voice"
+     }
+    ]
+   },
+   {
+    "id": "dub",
+    "phase": "screen",
+    "footage": "app_dubbing",
+    "url": "VoiceStudio \u00b7 Video dubbing",
+    "end": 16.85,
+    "transition": "punch",
+    "cam": [
+     [
+      0,
+      1.2,
+      720,
+      450
+     ],
+     [
+      0.5,
+      1.75,
+      330,
+      230
+     ],
+     [
+      1.4,
+      1.45,
+      950,
+      440
+     ],
+     [
+      2.7,
+      1.5,
+      950,
+      440
+     ]
+    ],
+    "cursor": [
+     [
+      0.15,
+      700,
+      600
+     ],
+     [
+      0.55,
+      250,
+      179,
+      "click"
+     ],
+     [
+      1.5,
+      620,
+      500
+     ],
+     [
+      2.4,
+      1240,
+      668,
+      "click"
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.6,
+      "rect": [
+       75,
+       163,
+       350,
+       34
+      ],
+      "label": "drop in a video"
+     },
+     {
+      "at": 1.4,
+      "rect": [
+       530,
+       321,
+       834,
+       228
+      ],
+      "color": "teal",
+      "label": "EN to ES, same timing"
+     }
+    ]
+   },
+   {
+    "id": "langs",
+    "phase": "screen",
+    "footage": "site",
+    "url": "voicestudio.sh",
+    "end": 18.8,
+    "transition": "punch",
+    "cam": [
+     [
+      0,
+      1.2,
+      1080,
+      500
+     ],
+     [
+      0.7,
+      2.0,
+      1200,
+      560
+     ],
+     [
+      1.9,
+      2.05,
+      1200,
+      560
+     ]
+    ],
+    "cursor": [
+     [
+      0.2,
+      1500,
+      800
+     ],
+     [
+      0.85,
+      1262,
+      575,
+      "click"
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.45,
+      "rect": [
+       1180,
+       548,
+       165,
+       42
+      ],
+      "label": "646 languages"
+     }
+    ]
+   },
+   {
+    "id": "local",
+    "phase": "screen",
+    "footage": "app_models",
+    "url": "VoiceStudio \u00b7 Settings \u00b7 Models",
+    "end": 20.7,
+    "transition": "punch",
+    "cam": [
+     [
+      0,
+      1.2,
+      720,
+      420
+     ],
+     [
+      0.7,
+      1.6,
+      840,
+      340
+     ],
+     [
+      1.9,
+      1.65,
+      850,
+      340
+     ]
+    ],
+    "cursor": [
+     [
+      0.2,
+      1100,
+      600
+     ],
+     [
+      0.9,
+      700,
+      330
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.4,
+      "rect": [
+       312,
+       270,
+       1073,
+       124
+      ],
+      "color": "teal",
+      "label": "models run on your machine"
+     }
+    ]
+   },
+   {
+    "id": "proof",
+    "phase": "screen",
+    "footage": "trending",
+    "url": "github.com/trending?since=weekly",
+    "end": 24.0,
+    "transition": "whip",
+    "cam": [
+     [
+      0,
+      1.0,
+      1080,
+      1500
+     ],
+     [
+      0.7,
+      1.3,
+      1080,
+      2050
+     ],
+     [
+      1.7,
+      2.1,
+      1600,
+      2110
+     ],
+     [
+      3.3,
+      2.2,
+      1620,
+      2115
+     ]
+    ],
+    "cursor": [
+     [
+      0.3,
+      1700,
+      1500
+     ],
+     [
+      1.0,
+      700,
+      2010,
+      "click"
+     ],
+     [
+      1.7,
+      1690,
+      2127
+     ],
+     [
+      3.0,
+      1700,
+      2130
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.8,
+      "rect": [
+       340,
+       1960,
+       1460,
+       200
+      ],
+      "label": "github trending \u00b7 this week"
+     },
+     {
+      "at": 1.7,
+      "rect": [
+       1590,
+       2104,
+       212,
+       46
+      ],
+      "color": "teal",
+      "label": "+17,057 stars"
+     }
+    ]
+   },
+   {
+    "id": "consent",
+    "phase": "screen",
+    "footage": "repo",
+    "url": "github.com/debpalash/VoiceStudio",
+    "end": 25.85,
+    "transition": "punch",
+    "cam": [
+     [
+      0,
+      1.1,
+      1080,
+      500
+     ],
+     [
+      0.8,
+      1.7,
+      1870,
+      520
+     ],
+     [
+      1.85,
+      1.75,
+      1870,
+      520
+     ]
+    ],
+    "cursor": [
+     [
+      0.2,
+      1300,
+      700
+     ],
+     [
+      0.9,
+      1700,
+      480
+     ]
+    ],
+    "boxes": [
+     {
+      "at": 0.6,
+      "rect": [
+       1580,
+       400,
+       575,
+       240
+      ],
+      "label": "open source \u00b7 AGPL-3.0"
+     }
+    ]
+   },
+   {
+    "id": "cta",
+    "phase": "cta",
+    "plate": "light",
+    "end": 29.7,
+    "transition": "whip",
+    "props": [
+     {
+      "src": "assets/dazz/sticker_cat.png",
+      "edge": "bottom",
+      "x": 1540,
+      "at": 0.9,
+      "size": 330,
+      "rot": -6,
+      "bubble": "free voice clones?!",
+      "bubble_at": 0.4
+     }
+    ]
+   },
+   {
+    "id": "outro",
+    "phase": "outro",
+    "end": 30.6,
+    "transition": "cut"
+   }
+  ],
+  "music": {
+   "file": "audio/music.mp3",
+   "drop_at": 5.062
+  },
+  "replace": {
+   "github": "GitHub",
+   "voicestudio": "VoiceStudio"
+  }
+ }
+}

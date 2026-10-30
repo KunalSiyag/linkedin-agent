@@ -11,6 +11,9 @@ Agent side:
   video.py wait JOB                       keep waiting for a job that was still rendering
   video.py status [JOB]                   recent jobs
   video.py clips                          recorded clips, with the page text check
+  video.py kit TOOL 'JSON'|@args.json [--draft ID]
+      Run one step of the video kit (kit/README.md): narrated, scored 16:9 videos with captions and motion graphics.
+      create_job needs --draft; every later step names the kit job_id. A render lands in the draft's visuals.
 
 STEPS.json: {"steps": [{"do": "wait", "seconds": 1.5},
                        {"do": "scroll", "to": "top"|"bottom"|"CSS selector"} | {"do": "scroll", "text": "Install"} |
@@ -56,11 +59,23 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 COMPUTER = Path(os.environ.get("STUDIO_COMPUTER_DIR", "/var/lib/studio-computer"))
 QUEUE, RESULTS, WORK = COMPUTER / "queue", COMPUTER / "results", COMPUTER / "work"
-JOB_ID = re.compile(r"[cv]-\d{4}-\d{6}-[a-z0-9-]{1,40}")
+JOB_ID = re.compile(r"[cvk]-\d{4}-\d{6}-[a-z0-9-]{1,40}")
+KIT_JOB_ID = re.compile(r"\d{8}-[a-z0-9-]{1,40}")
 STEP_VERBS = {"wait", "scroll", "read", "highlight", "zoom", "click", "open"}
 SCENES = {"title", "clip", "points", "stat", "code", "chart", "end"}
 SIZE_NAMES = ("landscape", "square", "portrait", "vertical")
 TEXT_LIMITS = {"kicker": 40, "title": 110, "sub": 160, "caption": 120, "label": 70, "value": 16, "note": 160}
+KIT = HERE.parent / "kit"
+KIT_STATE = COMPUTER / "state" / "kit"   # the kit's jobs, notes and rotation history; private to the studio computer
+GMI_PROXY = Path(os.environ.get("STUDIO_GMI_PROXY", "/var/lib/gmi-lab/media"))
+# Kit tools the agent may run, and what each needs checked. Publishing, ElevenLabs-only, arbitrary-file and asset-building
+# tools stay out: the owner posts by hand, and the box has no ElevenLabs key.
+KIT_TOOLS = {"doctor", "patterns", "pick_pattern", "list_jobs", "create_job", "add_sources", "voice_samples",
+             "generate_voiceover", "tighten_voice", "patch_voiceover", "add_footage", "capture_page", "generate_clip",
+             "generate_music", "set_storyboard", "preview", "render_video", "qa_render", "export_stills", "licenses"}
+KIT_NO_JOB = {"doctor", "patterns", "list_jobs", "create_job"}
+PEXELS = re.compile(r"(https://(www\.)?pexels\.com/video/[\w-]+/?|pexels:\d+|https://videos\.pexels\.com/video-files/\d+/[\w.-]+\.mp4)")
+CTA_BAIT = re.compile(r"\bcomment\s+[\"'“”‘’]?\w+[\"'“”‘’]?\s+(for|and|to get|below)\b|\bfollow\s+for\s+day\b|\bday\s+\d+\s+of\b", re.I)
 PAGE_BLOCKS = {"no-profile", "blocklist", "never-name"}
 PAGE_WARNS = {"personal", "controversy", "secret"}
 CODE_BLOCKS = {"no-profile", "blocklist", "never-name", "secret", "personal", "workplace", "controversy"}
@@ -88,7 +103,8 @@ def limits():
     extra = [str(d).strip().lower() for d in v.get("allow_domains", []) if re.fullmatch(r"(\*\.)?[a-z0-9.-]+\.[a-z]{2,}", str(d).strip().lower())]
     return {"allow": default_allow() + extra, "max_mb": float(v.get("max_mb", 9.5)),
             "max_clip_seconds": int(v.get("max_clip_seconds", 60)), "max_video_seconds": int(v.get("max_video_seconds", 90)),
-            "job_timeout": int(v.get("job_timeout", 600))}
+            "job_timeout": int(v.get("job_timeout", 600)), "kit_timeout": int(v.get("kit_timeout", 2700)),
+            "ai_clips": bool(v.get("ai_clips", False))}
 
 
 # ---------------- validation (both sides: the service never trusts a queue file) ----------------
@@ -226,6 +242,50 @@ def check_compose_job(j, lim):
     return j
 
 
+def check_kit_job(j, lim):
+    """A video-kit tool call. The kit itself validates its arguments; this keeps it to public pages, Pexels, our own
+    recordings and the LinkedIn rules (no comment-word CTA, no Day N series)."""
+    if j.get("v") != 1 or j.get("kind") != "kit" or not JOB_ID.fullmatch(str(j.get("id", ""))):
+        bad("not a version-1 kit job (the image may be older than the skill: rebuild it)")
+    tool, args = j.get("tool"), j.get("args")
+    if tool not in KIT_TOOLS:
+        bad(f"kit tool {tool!r} isn't available here; use one of: {', '.join(sorted(KIT_TOOLS))}")
+    if not isinstance(args, dict) or len(json.dumps(args)) > 200000:
+        bad("kit arguments must be one JSON object")
+    if tool not in KIT_NO_JOB and not KIT_JOB_ID.fullmatch(str(args.get("job_id", ""))):
+        bad(f"{tool} needs the job_id that create_job printed")
+    j["watermark"] = str(j.get("watermark", ""))[:40]
+    if tool == "capture_page":
+        check_url(str(args.get("url", "")), lim["allow"])
+    if tool == "add_footage":
+        if args.get("path"):
+            bad("add_footage takes a Pexels url or one of your recordings as \"clip\" (video.py record), not a path")
+        if args.get("clip"):
+            if not JOB_ID.fullmatch(str(args["clip"])) or not str(args["clip"]).startswith("c-"):
+                bad("'clip' must be a clip id from video.py record")
+        elif not PEXELS.fullmatch(str(args.get("url", ""))):
+            bad("add_footage url must be a Pexels video page (https://www.pexels.com/video/...) or pexels:<id>")
+    if tool == "generate_clip" and not lim["ai_clips"]:
+        bad('AI clips are off; the owner can allow them in profile/studio.json "video": {"ai_clips": true}. Use captures, '
+            "recordings and Pexels footage instead")
+    if tool == "set_storyboard":
+        sb = args.get("storyboard")
+        if not isinstance(sb, dict) or not isinstance(sb.get("scenes"), list):
+            bad('set_storyboard needs {"job_id": ..., "storyboard": {"scenes": [...], ...}}')
+        if sb.setdefault("look", "land") not in ("land", "dazz"):
+            bad("look must be land (16:9, the default) or dazz (9:16)")
+        if (sb.get("cta") or {}).get("comment_word") or "day" in sb or any(
+                isinstance(s, dict) and (s.get("daycard") or s.get("day")) for s in sb["scenes"]):
+            bad("LinkedIn videos have no comment-word CTA and no Day N card: drop cta.comment_word, day and daycard")
+        if sb.get("renderer") == "external":
+            bad("external renderers aren't available here")
+        sb.setdefault("fps", 30)  # the box has 2 CPUs: 60 fps doubles the render time for little gain in the feed
+    if tool == "render_video":
+        args["quality"] = "draft" if args.get("quality") == "draft" else "final"
+        args.pop("workers", None)
+    return j
+
+
 # ---------------- agent side ----------------
 
 def studio():
@@ -278,6 +338,8 @@ def wait(i, seconds):
         alive = stamp.exists() and time.time() - stamp.stat().st_mtime < 90
         print(f"{i}: still queued" + ("" if alive else " and the studio computer service isn't running; ask the owner to "
                                                        "check the studio-computer service log"))
+    elif i.startswith("k-"):
+        print(f"{i}: still running (kit renders take 3-10 minutes on this box). Run: video.py wait {i}")
     else:
         f, n = s.get("frame", 0), s.get("frames") or 1
         print(f"{i}: still rendering ({f}/{n} frames, {100 * f // n}%). Run: video.py wait {i}")
@@ -409,6 +471,129 @@ def cmd_make(a):
         finish(job["id"], s)
 
 
+KIT_TECH = {"id", "job_id", "footage", "file", "src", "transition", "phase", "look", "font", "plate", "music", "style",
+            "motion_system", "pattern", "series", "category", "voice_id", "model_id", "emotion", "ease", "anchor", "side",
+            "viewport", "url", "source_page", "license", "kind", "renderer", "quality", "at"}
+
+
+def kit_texts(v, key=None):
+    """Words a storyboard can put on screen: every string except ids, file names, colours and other settings."""
+    if isinstance(v, dict):
+        return [t for k, x in v.items() if k not in KIT_TECH and not k.endswith(("_font", "_color", "_id")) for t in kit_texts(x, k)]
+    if isinstance(v, list):
+        return [t for x in v for t in kit_texts(x, key)]
+    if isinstance(v, str) and v.strip() and not re.fullmatch(r"[#\w./:-]+", v.strip()) or (isinstance(v, str) and key in (
+            "title", "text", "label", "mega", "h1", "h2", "caption", "sub", "kicker", "bubble", "word")):
+        return [v]
+    return []
+
+
+def kit_map():
+    p = studio().HOME / "state" / "kit_jobs.json"
+    try:
+        return p, json.loads(p.read_text())
+    except (OSError, ValueError):
+        return p, {}
+
+
+def cmd_kit(a):
+    lp, lim = studio(), limits()
+    try:
+        raw = a.args or "{}"
+        args = json.loads(Path(raw[1:]).read_text(encoding="utf-8") if raw.startswith("@") else raw)
+    except (OSError, json.JSONDecodeError) as e:
+        sys.exit(f"can't read the arguments: {e} (give JSON, or @file.json)")
+    if not isinstance(args, dict):
+        sys.exit("the arguments are one JSON object")
+    mp, jobs = kit_map()
+    draft = a.draft
+    if a.tool == "create_job":
+        if not draft or not (lp.HOME / "drafts" / draft / "meta.json").exists():
+            sys.exit("create_job needs --draft ID: every video belongs to a post draft (drafts.py new first)")
+        args["look"] = "trending"
+    elif a.tool not in KIT_NO_JOB:
+        draft = jobs.get(str(args.get("job_id")))
+        if not draft:
+            sys.exit(f"unknown kit job {args.get('job_id')!r}; start one with: video.py kit create_job '{{...}}' --draft ID")
+    facts = None
+    if draft and (lp.HOME / "drafts" / draft / "facts.md").exists():
+        facts = (lp.HOME / "drafts" / draft / "facts.md").read_text(encoding="utf-8")
+    job = {"v": 1, "kind": "kit", "id": f"k-{now().strftime('%m%d-%H%M%S')}-{slug(a.tool, 30)}", "tool": a.tool,
+           "args": args, "draft": draft, "watermark": settings()["footer"], "queued": now().isoformat(timespec="seconds")}
+    try:
+        job = check_kit_job(job, lim)
+    except ValueError as e:
+        sys.exit(str(e))
+    # Every spoken and on-screen word gets the post rules, numbers checked against the draft's facts.
+    texts = {"generate_voiceover": [args.get("script", "")], "patch_voiceover": [args.get("text", "")],
+             "voice_samples": [args.get("text", "")], "set_storyboard": kit_texts(args.get("storyboard"))}.get(a.tool, [])
+    text = "\n".join(t for t in texts if t)
+    if text.strip():
+        failed = False
+        if m := CTA_BAIT.search(text):
+            print(f"BLOCK cta: {m.group(0)!r} is the Instagram comment-word/day-series CTA; on LinkedIn end on where the code is")
+            failed = True
+        for f in lp.lint(text, "comment", facts):
+            if f["level"] == "BLOCK" and f["code"] != "length":
+                print(f"BLOCK {f['code']}: {f['msg']}" + (f"  {f['hits']}" if f.get("hits") else ""))
+                failed = True
+        if failed:
+            sys.exit(1)
+    if a.tool == "set_storyboard":
+        used = {f for s in args["storyboard"]["scenes"] if isinstance(s, dict)
+                for f in [s.get("footage"), *(s.get("fan") or [])] if isinstance(f, str)}
+        if bad_ids := used & set(jobs.get("_blocked", {}).get(args["job_id"], [])):
+            sys.exit(f"footage {', '.join(sorted(bad_ids))} showed text that can't go on LinkedIn; capture another page")
+    if a.tool == "add_footage" and args.get("clip"):
+        if not (RESULTS / args["clip"] / "result.json").exists():
+            sys.exit(f"clip {args['clip']} isn't recorded (see video.py clips)")
+        blocks, _ = page_check(args["clip"])
+        if blocks:
+            sys.exit(f"clip {args['clip']} showed text that can't go on LinkedIn ({blocks[0]['msg']}); record another page")
+    queue(job)
+    print(f"queued {job['id']}: kit {a.tool}" + (f" for draft {draft}" if draft else ""))
+    s = wait(job["id"], a.wait)
+    if s:
+        finish(job["id"], s)
+
+
+def show_kit(i, s):
+    r = json.loads((RESULTS / i / "result.json").read_text())
+    out = r.get("kit") or {}
+    out.pop("trace", None)
+    if r["tool"] == "create_job" and out.get("ok") and out.get("job_id"):
+        mp, jobs = kit_map()
+        jobs[out["job_id"]] = r["draft"]
+        mp.parent.mkdir(parents=True, exist_ok=True)
+        recent = [(k, v) for k, v in jobs.items() if not k.startswith("_")][-300:]
+        mp.write_text(json.dumps({**{k: v for k, v in jobs.items() if k.startswith("_")}, **dict(recent)}, indent=1))
+        out.pop("dir", None)
+    print(json.dumps(out, indent=1, ensure_ascii=False)[:12000])
+    if r["tool"] == "capture_page" and out.get("ok") and (RESULTS / i / "seen.txt").exists():
+        blocks, warns = page_check(i)
+        for f in blocks:
+            print(f"  BLOCK {f['code']}: the page showed {f['msg'].split(': ', 1)[-1]}; footage {out.get('id')} can't be used")
+        for f in warns:
+            print(f"  WARN {f['code']} on screen: {f.get('hits', [])[:4]}; tell the owner before using it")
+        if blocks:
+            mp, jobs = kit_map()
+            jobs.setdefault("_blocked", {}).setdefault(r["job_id"], []).append(out.get("id"))
+            mp.write_text(json.dumps(jobs, indent=1))
+    if out.get("stop_and_report"):
+        print("STOP: tell the owner what failed (budget, credits or the GMI key); don't retry in a loop")
+    lp = studio()
+    if (RESULTS / i / "video.mp4").exists() and r.get("draft"):
+        files = deliver(i, r, {"draft": r["draft"], "size": "kit", "scenes": [], "kit_job": out.get("job_id") or r["job_id"]})
+        print(f"  {r.get('quality', 'final')} render, {Path(files[0]).stat().st_size / 1048576:.1f} MB for Discord ({r.get('encode', '')})")
+        print(f"MEDIA:{files[0]}")
+    for name in ("preview.jpg", "sheet.jpg", "cover.jpg"):
+        if (RESULTS / i / name).exists():
+            dst = lp.HOME / "videos" / f"{i}-{name}"
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(RESULTS / i / name, dst)
+            print(f"MEDIA:{dst}")
+
+
 def deliver(i, r, job):
     lp = studio()
     d = lp.HOME / "drafts" / job["draft"]
@@ -462,7 +647,7 @@ def show_video(i, s):
 def finish(i, s):
     if s["state"] == "failed":
         sys.exit(f"{i} failed: {s.get('note', 'unknown error')}")
-    (show_clip if i.startswith("c-") else show_video)(i, s)
+    {"c": show_clip, "v": show_video, "k": show_kit}[i[0]](i, s)
 
 
 def cmd_wait(a):
@@ -508,6 +693,56 @@ def write_status(i, **s):
     tmp.replace(d / "status.json")
 
 
+def run_kit(job, out, work, lim):
+    """One kit tool call: the kit's own CLI with no keys in its environment; GMI goes through the gmi-lab proxy."""
+    import video_engine as eng
+    from cdp import chrome
+    args, tool = dict(job["args"]), job["tool"]
+    if tool == "capture_page":  # shot by our browser (allowlist, no hangs), then registered as the kit's image footage
+        png = Path(work) / f"{re.sub(r'[^a-z0-9_-]', '', str(args.get('id', 'shot')).lower())[:30] or 'shot'}.png"
+        title, seen = eng.page_shot(args, png, work, lim["allow"])
+        (out / "seen.txt").write_text("\n".join([title, args["url"], *seen])[:200000], encoding="utf-8")
+        tool = "add_footage"
+        args = {"job_id": args["job_id"], "path": str(png), "label": args.get("label") or title[:80] or args["url"],
+                "license": args.get("license") or "Screenshot of public web page (editorial/commentary use); see source_page "
+                                                  "for the project's own license", "source_page": args["url"],
+                **({"id": args["id"]} if args.get("id") else {})}
+    if tool == "add_footage" and args.get("clip"):
+        src = RESULTS / args.pop("clip") / "master.mp4"
+        if not src.exists():
+            src = src.with_name("clip.mp4")
+        if not src.exists():
+            raise ValueError("that recording is gone (recordings are kept two weeks); record the page again")
+        args["path"] = str(src)
+    for d in ("jobs", "notes"):
+        (KIT_STATE / d).mkdir(parents=True, exist_ok=True)
+    KIT_STATE.chmod(0o700)
+    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(work), "TMPDIR": str(work), "LANG": "C.UTF-8",
+           "STUDIO_JOBS_DIR": str(KIT_STATE / "jobs"), "STUDIO_NOTES_DIR": str(KIT_STATE / "notes"),
+           "STUDIO_HISTORY_FILE": str(KIT_STATE / "history.json"), "STUDIO_VENV_PYTHON": sys.executable,
+           "STUDIO_PYTHON": sys.executable, "CHROME_BIN": chrome(), "MEDIA_PROVIDER": "gmi",
+           "STUDIO_GMI_PROXY": str(GMI_PROXY), "STUDIO_WATERMARK": job["watermark"],
+           "STUDIO_WORKERS": str(max(2, min(os.cpu_count() or 2, 6))), "HF_HOME": str(KIT_STATE / "hf")}
+    p = subprocess.run([sys.executable, str(KIT / "lib" / "studio.py"), tool, json.dumps(args)], cwd=KIT, env=env,
+                       capture_output=True, text=True, timeout=lim["kit_timeout"])
+    try:
+        res = json.loads(p.stdout[p.stdout.index("{"):])
+    except ValueError:
+        raise eng.JobError(f"the kit printed no result (exit {p.returncode}): {(p.stderr or p.stdout)[-300:]}")
+    r = {"tool": job["tool"], "draft": job.get("draft"), "job_id": args.get("job_id") or res.get("job_id"), "kit": res}
+    jd = KIT_STATE / "jobs" / str(r["job_id"] or "")
+    if res.get("ok") and r["job_id"]:
+        if job["tool"] == "render_video" and (jd / res.get("file", "out/final.mp4")).exists():
+            r["encode"] = eng.fit_size(jd / res.get("file", "out/final.mp4"), out / "video.mp4", lim["max_mb"], work, audio=True)
+            r["quality"] = args.get("quality", "final")
+            shutil.copy(jd / res.get("file", "out/final.mp4"), out / "master.mp4")
+        for key, src, name in (("preview", res.get("file"), "preview.jpg"), ("qa_render", res.get("sheet"), "sheet.jpg"),
+                               ("export_stills", "out/cover_16x9.jpg", "cover.jpg")):
+            if job["tool"] == key and src and (jd / src).exists():
+                shutil.copy(jd / src, out / name)
+    return r
+
+
 def cmd_run(a):
     """Render one job. Runs as the studio-computer user in its own process group, killed by serve() on timeout."""
     import video_engine as eng
@@ -521,6 +756,17 @@ def cmd_run(a):
         job = json.loads((QUEUE / f"{i}.json").read_text())
         if job.get("id") != i:
             raise ValueError("job id mismatch")
+        if job.get("kind") == "kit":
+            job = check_kit_job(job, lim)
+            out.mkdir(parents=True, exist_ok=True)
+            write_status(i, state="running")
+            t0 = time.monotonic()
+            r = run_kit(job, out, work, lim)
+            r["render_s"] = round(time.monotonic() - t0, 1)
+            (out / "result.json").write_text(json.dumps(r, indent=1, ensure_ascii=False))
+            write_status(i, state="done")
+            log(f"{i}: kit {job['tool']} {'ok' if r['kit'].get('ok') else 'failed'} in {r['render_s']} s")
+            return
         job = check_record_job(job, lim) if job.get("kind") == "record" else check_compose_job(job, lim)
         out.mkdir(parents=True, exist_ok=True)
         progress = lambda f, n: write_status(i, state="running", frame=f, frames=n)
@@ -538,7 +784,7 @@ def cmd_run(a):
         (out / "result.json").write_text(json.dumps(r, indent=1, ensure_ascii=False))
         write_status(i, state="done")
         log(f"{i}: done, {r['seconds']} s video in {r['render_s']} s")
-    except (ValueError, eng.JobError, eng.CDPError, subprocess.CalledProcessError, OSError) as e:
+    except (ValueError, eng.JobError, eng.CDPError, subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
         write_status(i, state="failed", note=str(e)[:300])
         log(f"{i}: failed: {e}")
     except Exception as e:  # a bug, not a bad request: say so in the status instead of a bare exit code
@@ -558,7 +804,7 @@ def cmd_serve(a):
         (COMPUTER / "state" / "heartbeat").touch()
         if time.time() - last_clean > 6 * 3600:  # recordings are big; keep two weeks
             last_clean = time.time()
-            for p in list(RESULTS.glob("*")) + list(QUEUE.glob("*.json")):
+            for p in list(RESULTS.glob("*")) + list(QUEUE.glob("*.json")) + list((KIT_STATE / "jobs").glob("*")):
                 try:
                     if time.time() - p.stat().st_mtime > 14 * 86400:
                         shutil.rmtree(p) if p.is_dir() else p.unlink()
@@ -570,8 +816,9 @@ def cmd_serve(a):
                 continue
             write_status(i, state="running", frame=0, frames=1)
             p = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "run", i], start_new_session=True)
+            lim = limits()
             try:
-                p.wait(timeout=limits()["job_timeout"])
+                p.wait(timeout=lim["kit_timeout"] + 60 if i.startswith("k-") else lim["job_timeout"])
             except subprocess.TimeoutExpired:
                 os.killpg(p.pid, signal.SIGKILL)
                 p.wait()
@@ -607,10 +854,15 @@ def main():
     s = sub.add_parser("status")
     s.add_argument("job", nargs="?")
     sub.add_parser("clips")
+    k = sub.add_parser("kit")
+    k.add_argument("tool")
+    k.add_argument("args", nargs="?", help="JSON object, or @file.json")
+    k.add_argument("--draft", help="the post draft this video belongs to (create_job)")
+    k.add_argument("--wait", type=float, default=150)
     sub.add_parser("serve")
     sub.add_parser("run").add_argument("job")
     a = ap.parse_args()
-    {"record": cmd_record, "make": cmd_make, "wait": cmd_wait, "status": cmd_status, "clips": cmd_clips,
+    {"record": cmd_record, "make": cmd_make, "wait": cmd_wait, "status": cmd_status, "clips": cmd_clips, "kit": cmd_kit,
      "serve": cmd_serve, "run": cmd_run}[a.cmd](a)
 
 

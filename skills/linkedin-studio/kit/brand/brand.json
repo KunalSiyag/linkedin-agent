@@ -1,0 +1,148 @@
+{
+  "channel": "LinkedIn studio (the owner's LinkedIn videos)",
+  "audience": "Developers, builders and hiring managers on LinkedIn.",
+  "style_reference": "High-retention AI-tools reels, LANDSCAPE 16:9 1920x1080 @ 60 fps (look 'land', default). Topic on screen by 2 s. 9:16 'dazz' look still available via storyboard look:'dazz'.",
+  "avoid": [
+    "Unverified numbers or claims",
+    "Jailbreak / piracy / exploit repos and anything that breaks ToS",
+    "Crypto/token shilling, fake giveaways",
+    "Visible watermarks or unlicensed footage/music"
+  ],
+  "voice": {
+    "provider": "ElevenLabs",
+    "model_id": "eleven_v3",
+    "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
+    "voice_name": "Liam - Energetic, Social Media Creator (premade, American)",
+    "v3_stability": 0.5,
+    "similarity_boost": 0.8,
+    "post": "tighten_voice max_gap 0.12, tempo 1.12",
+    "rule": "FIXED NARRATOR for every reel (daily, promo, documentary). Never swap voices (owner's rule, 2026-10-22).",
+    "plan": "Creator tier, ~131k characters/month - a 90-word script is ~550 characters"
+  },
+  "voice_gmi": {
+    "provider": "GMI Cloud (MiniMax)",
+    "model": "minimax-tts-speech-2.8-hd",
+    "voice_id": "English_expressive_narrator",
+    "voice_name": "MiniMax English expressive narrator (placeholder)",
+    "speed": 1.0,
+    "emotion": "auto",
+    "post": "tighten_voice max_gap 0.12, tempo 1.12 (re-check: MiniMax pacing differs from Liam)",
+    "rule": "Used only when VOICE_PROVIDER/MEDIA_PROVIDER=gmi. Switching provider changes the channel narrator: the owner picks the voice_id once (voice_samples, or a MiniMax voice clone of the owner's own voice), then it stays fixed like Liam."
+  },
+  "music_gmi": {
+    "model": "minimax-music-3.0",
+    "note": "Used when MUSIC_PROVIDER/MEDIA_PROVIDER=gmi. Instrumental via structure-tag lyrics; no length control, the drop is detected in the track."
+  },
+  "clips_gmi": {
+    "model": "seedance-2-5-260628",
+    "note": "generate_clip default (4-15 s, 480p/720p). Alternatives: veo-3.1-generate-001, veo-3.1-fast-generate-001, kling-v3-text-to-video, wan2.7-t2v (pass their fields in payload)."
+  },
+  "style": {
+    "accent": "#FFD60A",
+    "accent2": "#3DF5FF",
+    "title_font": "Anton-Regular.ttf",
+    "caption_font": "Poppins-Black.ttf",
+    "caption_size": 92
+  },
+  "layout": {
+    "title_y": 560,
+    "label_y": 420,
+    "stat_y": 640,
+    "list_y": 360,
+    "caption_y": 1180,
+    "handle_y": 300,
+    "notes": "Instagram/YouTube UI covers ~top 220 px, bottom 20% (y>1536) and a right-edge column (x>960) of buttons. Handle sits at the top (y 300), captions centred at x 520 / y 1180 and max 800 px wide, so they never meet.",
+    "handle_x": 540,
+    "caption_x": 520,
+    "caption_max_w": 800,
+    "safe_bottom": 1536,
+    "safe_right": 960
+  },
+  "watermark": "",
+  "music_prompt": "Modern dark trap / phonk-lite instrumental for a tech reel, punchy 808s, crisp hats, tense synth, no vocals, steady energy, 140 bpm",
+  "cta_default": "No comment-word CTA on LinkedIn: end on where the code or link is (the link goes in the first comment).",
+  "voice_v3": {
+    "provider": "ElevenLabs",
+    "model_id": "eleven_v3",
+    "endpoint": "/v1/text-to-speech/{voice_id}/with-timestamps (returns character alignment; [tags] are stripped from captions)",
+    "voice_id": "TX3LPaxmHKxFdv7VOQHJ",
+    "voice_name": "Liam - Energetic, Social Media Creator (premade, American)",
+    "v3_stability": 0.5,
+    "similarity_boost": 0.8,
+    "post": "tighten_voice max_gap 0.12, tempo 1.12 (v3 has no speed setting; Liam reads ~2.9 words/s raw -> ~3.2 after)",
+    "chosen": "2026-10-20 from a 4-voice v3 test of the hook line (jobs/20261020-ai-job-search-dazz/voice/samples/). Liam: widest pitch range (17.5 semitones p10-p90), fastest (3.6 w/s), clear. Charlie (Australian) close second; Chris clearest but flat (4 st); Viraj (Indian English, professional voice) slowest and 'hired' came out unclear.",
+    "alternates": {},
+    "tags": "use 1-3 per script, e.g. [excited] on the hook, [curious] before the results question; keep delivery casual, not dramatic",
+    "rule": "FIXED. Do not use alternates; same narrator on every reel."
+  },
+  "looks": {
+    "dazz": {
+      "description": "notmy.bug / ai.byprince-style: disconnect hook (abstract clips + typed serif hook) -> cream paper plate + 'welcome to day N' ransom strips -> framed 16:9 screen recording with camera moves, cursor, highlight boxes -> paper CTA with stickers. 60 fps.",
+      "day_counter": {
+        "next": 5,
+        "rule": "storyboard 'day' + script 'welcome to day N' use next; mark_published bumps it by one"
+      },
+      "fonts": {
+        "hook": "DMSerifDisplay-Regular.ttf (OFL)",
+        "strips": "DM Serif Display / Abril Fatface / Special Elite (OFL/Apache)",
+        "labels": "SpecialElite-Regular.ttf (Apache 2.0)"
+      },
+      "colors": {
+        "hook_fill": "#FFE14D",
+        "hook_hot": "#FF3B30",
+        "yellow": "#FFE14D",
+        "pink": "#FF9EC7",
+        "paper": "#F8F5EC",
+        "ink": "#151312"
+      },
+      "audio": {
+        "voice_over_bed_db": "8-10 (QA: min 6, median 8-10.5)",
+        "music": "ElevenLabs Music instrumental, gain ~0.34, duck 4 dB",
+        "also_export": "final_nomusic.mp4 (voice + SFX) for adding a trending in-app track"
+      },
+      "watermark": "small pill top-right (x<=1040, y~262)"
+    },
+    "land": {
+      "description": "16:9 1920x1080 @ 60 fps. Project-first hook (floating UI window + H1 + drafting lines, optional prop cutout with speech bubble, abstract 0.3-0.5 s flashes) -> editorial title card -> floating dark browser window demo with slow push, cursor, pop-bounce clicks, callouts, sentence captions -> CTA -> dark logo card.",
+      "spec": "references/style/landscape_style_spec.md (kit root)",
+      "fonts": {
+        "sans": "Inter 400/600/700 (OFL)",
+        "serif": "Playfair Display 500 / 500 italic (OFL)",
+        "mono": "JetBrains Mono 500 (OFL)"
+      },
+      "colors": {
+        "bg_light": "#F7F7F8",
+        "bg_dark": "#0D1117",
+        "text": "#111111",
+        "text_dark": "#FFFFFF",
+        "accent": "#FF5E00",
+        "accent2": "#00B4A0"
+      },
+      "motion": "Expo-out cubic-bezier(0.16,1,0.3,1), 450 ms per element, 80 ms stagger",
+      "safe_area": {
+        "x": [
+          288,
+          1632
+        ],
+        "y": [
+          162,
+          918
+        ]
+      },
+      "captions": "sentence-level, lower-middle (y ~868), Inter SemiBold 46 on a dark pill",
+      "cta": "LinkedIn: no comment keyword; the CTA scene names where the code/link is",
+      "covers": [
+        "cover_16x9.jpg 1920x1080",
+        "thumbnail_youtube_1280x720.jpg",
+        "cover_ig_1080x1350.jpg (4:5 crop)"
+      ],
+      "audio": {
+        "voice_over_bed_db": "6-8 (QA: min 6, median 6-8.5)",
+        "music": "ElevenLabs Music auto (drop on the hook->body cut)",
+        "also_export": "final_nomusic.mp4"
+      },
+      "day_counter": "not used on LinkedIn"
+    }
+  },
+  "default_look": "land"
+}

@@ -41,6 +41,15 @@ CATALOG = SHARED / "catalog.json"
 OLD_CATALOG = HOME / "state" / "gmi_catalog.json"
 API = os.environ.get("GMI_API_BASE", "https://api.gmi-serving.com/v1")  # set only in tests, by root
 UA = "linkedin-studio-lab/1.0"
+# Voice, music and clips for the video kit: the studio computer drops {id, model, payload} in MEDIA/queue (group-writable
+# for it), this service checks the model and the owner's video budget, calls GMI's request queue with the key and writes
+# the outcome (media URLs, never the key) to MEDIA/results. The budget lives in the studio computer's root-owned limits.
+MEDIA = LAB / "media"
+MEDIA_QUEUE = os.environ.get("GMI_QUEUE_URL", "https://console.gmicloud.ai/api/v1/ie/requestqueue/apikey")  # tests only
+VIDEO_LIMITS = Path(os.environ.get("STUDIO_COMPUTER_DIR", "/var/lib/studio-computer")) / "limits.json"
+# List prices (USD) from GMI's catalog; the account discount only makes the real charge lower.
+MEDIA_MODELS = {"minimax-tts-": lambda p: 0.10 * len(str(p.get("text", ""))) / 1000, "minimax-music-": lambda p: 0.15,
+                "seedance-": lambda p: 0.231 * float(p.get("duration", 5))}
 
 
 def now():
@@ -136,6 +145,7 @@ def cmd_status(a):
         print(f"{i}: {s['state']}" + (f", {s.get('done', 0)}/{s.get('total', '?')} calls, ${s.get('spent_usd', 0):.4f}"
                                       if s["state"] != "queued" else "") + (f" ({s['note']})" if s.get("note") else ""))
     print(f"spent today: ${spent_today():.4f} of ${limits()['daily_usd']:.2f}")
+    print(f"video media today (voice, music, clips): ${spent_today('media'):.4f} of ${media_limits()['daily_usd']:.2f}")
 
 
 def summarize(res):
@@ -202,20 +212,100 @@ def api(path, key, body=None, timeout=180):
         return json.loads(r.read())
 
 
-def ledger():
-    p = STATE / "ledger.json"
+def ledger(name="ledger"):
+    p = STATE / f"{name}.json"
     return json.loads(p.read_text()) if p.exists() else {}
 
 
-def spent_today():
-    return ledger().get(now().date().isoformat(), 0.0)
+def spent_today(name="ledger"):
+    return ledger(name).get(now().date().isoformat(), 0.0)
 
 
-def charge(usd):
-    led = ledger()
+def charge(usd, name="ledger"):
+    led = ledger(name)
     day = now().date().isoformat()
     led[day] = round(led.get(day, 0.0) + usd, 6)
-    (STATE / "ledger.json").write_text(json.dumps(dict(sorted(led.items())[-60:])))
+    (STATE / f"{name}.json").write_text(json.dumps(dict(sorted(led.items())[-60:])))
+
+
+def media_limits():
+    try:
+        v = json.loads(VIDEO_LIMITS.read_text())
+    except (OSError, ValueError):
+        v = {}
+    return {"daily_usd": float(v.get("media_daily_usd", 1.0)), "ai_clips": bool(v.get("ai_clips", False))}
+
+
+def media_one(key, req):
+    """One kit request -> {"outcome", "request_id"} or {"error", ...}. Never raises."""
+    model, payload = str(req.get("model", "")), req.get("payload")
+    cost = next((f for pre, f in MEDIA_MODELS.items() if model.startswith(pre)), None)
+    if not cost or not isinstance(payload, dict) or len(json.dumps(payload)) > 20000:
+        return {"error": f"{model or 'that model'} isn't one the video kit may use (voice, music, clips)", "model": model}
+    lim = media_limits()
+    if model.startswith("seedance-"):
+        if not lim["ai_clips"]:
+            return {"error": 'AI clips are off; the owner can allow them in profile/studio.json "video": {"ai_clips": true}',
+                    "stop_and_report": True}
+        payload["duration"] = max(4, min(int(payload.get("duration", 5)), 10))
+    usd = round(cost(payload), 4)
+    if spent_today("media") + usd > lim["daily_usd"]:
+        return {"error": f"today's video budget is used up (${spent_today('media'):.2f} of ${lim['daily_usd']:.2f}); "
+                         "try tomorrow or ask the owner to raise video.media_daily_usd", "stop_and_report": True}
+
+    def call(method, path, body=None):
+        r = urllib.request.Request(MEDIA_QUEUE + path, data=json.dumps(body).encode() if body else None, method=method,
+                                   headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                                            "Accept": "application/json", "User-Agent": UA})
+        with urllib.request.urlopen(r, timeout=120) as resp:
+            return json.loads(resp.read() or b"{}")
+    try:
+        r = call("POST", "/requests", {"model": model, "payload": payload})
+        rid = r.get("request_id")
+        if not rid:
+            return {"error": "GMI returned no request_id", "body": json.dumps(r)[:400]}
+        charge(usd, "media")
+        print(f"[gmi-lab] media {req.get('id')}: {model} ${usd:.4f}", flush=True)
+        t0, wait = time.monotonic(), min(int(req.get("timeout", 900)), 1500)
+        while True:
+            if r.get("status") == "success" and r.get("outcome"):
+                return {"outcome": r["outcome"], "request_id": rid}
+            if r.get("status") in ("failed", "cancelled"):
+                return {"error": f"GMI request {r['status']}", "request_id": rid, "body": json.dumps(r.get("outcome") or r)[:600]}
+            if time.monotonic() - t0 > wait:
+                return {"error": f"GMI request still '{r.get('status')}' after {wait}s", "request_id": rid}
+            time.sleep(10 if model.startswith("seedance-") else 4)
+            r = call("GET", f"/requests/{rid}")
+    except urllib.error.HTTPError as e:
+        hint = {401: "bad/expired API key", 402: "out of credits / billing", 429: "rate limited"}.get(e.code, "")
+        return {"error": f"GMI HTTP {e.code} {hint}".strip(), "http_status": e.code, "stop_and_report": e.code in (401, 402, 429),
+                "body": e.read().decode(errors="replace")[:400]}
+    except Exception as e:
+        return {"error": f"GMI call failed: {type(e).__name__}: {str(e)[:200]}"}
+
+
+def media_loop(key):
+    q, res = MEDIA / "queue", MEDIA / "results"
+    while True:
+        try:
+            for p in sorted(q.glob("m-*.json")) if q.is_dir() else []:
+                out = res / p.name
+                try:
+                    req = json.loads(p.read_text())
+                    ans = media_one(key, req) if req.get("id") == p.stem else {"error": "malformed request"}
+                except (OSError, ValueError) as e:
+                    ans = {"error": f"unreadable request: {e}"}
+                tmp = res / f".{p.name}.tmp"
+                tmp.write_text(json.dumps(ans))
+                tmp.chmod(0o644)
+                tmp.replace(out)
+                p.unlink(missing_ok=True)
+            for p in res.glob("m-*.json") if res.is_dir() else []:  # answers are read within minutes
+                if time.time() - p.stat().st_mtime > 86400:
+                    p.unlink(missing_ok=True)
+        except Exception as e:  # keep serving; one bad file mustn't stop voiceovers for the day
+            print(f"[gmi-lab] media loop: {type(e).__name__}: {e}", flush=True)
+        time.sleep(2)
 
 
 def refresh_catalog(key):
@@ -349,6 +439,8 @@ def cmd_serve(a):
         time.sleep(3600)
     for d in (RESULTS, SHARED, STATE):
         d.mkdir(parents=True, exist_ok=True)
+    import threading
+    threading.Thread(target=media_loop, args=(key,), daemon=True).start()  # experiments can run for minutes
     last_catalog = 0.0
     while True:
         if time.time() - last_catalog > 6 * 3600:

@@ -38,6 +38,12 @@ No secrets are baked in; everything sensitive is passed as environment variables
   stagger and reading-time rules baked into `assets/video/`, so any GMI model gets good motion without seeing frames.
   On-screen text passes the post linter; recorded page text passes the private-term checks. Output fits Discord's
   attachment limit (`max_mb`, default 9.5).
+- **Narrated videos with the video kit** (`skills/linkedin-studio/kit/`, the owner's Dazzbuilds reel pipeline adapted for
+  LinkedIn): `video.py kit TOOL` runs each step on the studio computer: page captures (allowlisted pages, CDN assets
+  allowed), Pexels clips and screen recordings as footage, a GMI MiniMax voiceover with faster-whisper word timings,
+  MiniMax music, a rotating motion-graphic look, captions, a -14 LUFS mix and automatic QA. GMI calls go through the
+  `gmi-lab` service (the only holder of the key) within a daily video budget (`video.media_daily_usd`, AI clips off
+  unless `video.ai_clips`). Every spoken and on-screen word passes the post linter; no comment-word CTAs or Day N cards.
 - **Voice notes:** Discord voice messages are transcribed on the box with faster-whisper (`stt.provider: local`).
 - **Model test-drives:** `lab.py` queues small experiments (same tasks across several models, automatic checks,
   optional judge model); the `gmi-lab` service runs them as its own user, the only one holding the GMI key, within a

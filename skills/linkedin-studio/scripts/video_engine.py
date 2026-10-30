@@ -110,20 +110,22 @@ def probe_seconds(path):
     return float(r.stdout.strip() or 0)
 
 
-def fit_size(master, out, max_mb, workdir):
-    """Copy the master if it fits the size limit (Discord's attachment cap by default); else two-pass to fit."""
+def fit_size(master, out, max_mb, workdir, audio=False):
+    """Copy the master if it fits the size limit (Discord's attachment cap by default); else two-pass to fit.
+    audio=True keeps the soundtrack at 128 kbps AAC (kit videos have voice and music)."""
     if master.stat().st_size <= max_mb * 1024 * 1024:
         shutil.copy(master, out)
         return "master"
     dur = max(probe_seconds(master), 1.0)
-    kbps = int(max_mb * 8192 * 0.94 / dur)
+    kbps = int(max_mb * 8192 * 0.94 / dur) - (128 if audio else 0)
     scale = ["-vf", "scale=-2:720:flags=lanczos"] if kbps < 1500 else []
     common = ["ffmpeg", "-y", "-loglevel", "error", "-i", str(master), *scale, "-c:v", "libx264", "-preset", "medium",
               "-b:v", f"{kbps}k", "-maxrate", f"{int(kbps * 1.5)}k", "-bufsize", f"{kbps * 2}k", "-pix_fmt", "yuv420p",
-              "-an", "-passlogfile", str(Path(workdir) / "pass")]
-    subprocess.run(common + ["-pass", "1", "-f", "null", "/dev/null"], check=True, cwd=workdir)
-    subprocess.run(common + ["-pass", "2", "-movflags", "+faststart", str(out)], check=True, cwd=workdir)
-    return f"{kbps} kbps" + (", 720p" if scale else "")
+              "-passlogfile", str(Path(workdir) / "pass")]
+    sound = ["-c:a", "aac", "-b:a", "128k"] if audio else ["-an"]
+    subprocess.run(common + ["-an", "-pass", "1", "-f", "null", "/dev/null"], check=True, cwd=workdir)
+    subprocess.run(common + sound + ["-pass", "2", "-movflags", "+faststart", str(out)], check=True, cwd=workdir)
+    return f"{kbps} kbps" + (" + 128 kbps audio" if audio else "") + (", 720p" if scale else "")
 
 
 def contact_sheet(jpegs, out, cols=3):
@@ -553,6 +555,70 @@ def record(job, out, work, log, progress):
     return {"seconds": round(rec.frames / FPS, 2), "frames": rec.frames, "width": size[0], "height": size[1],
             "title": final.get("title", ""), "final_url": final.get("url", ""), "notes": rec.notes,
             "blocked_hosts": sorted(blocked)}
+
+
+def page_shot(a, png, work, allow):
+    """The video kit's capture_page, done by this browser (allowlist enforced, no virtual-time hangs on animated
+    pages): a tall screenshot of one public page at the kit's viewport sizes. Returns (title, text seen in the shot)."""
+    mobile = a.get("viewport", "mobile") == "mobile"
+    w = int(min(max(int(a.get("width", 430 if mobile else 1280)), 320), 2560))
+    h = int(min(max(int(a.get("height", 2600 if mobile else 1800)), 400), 6000))
+    dpr = float(min(max(float(a.get("dpr", 2.5 if mobile else 1.5)), 1.0), 3.0))
+    home = Path(work) / "shot"
+    home.mkdir(parents=True, exist_ok=True)
+
+    def public(url):  # a page's images, fonts and scripts come from CDNs: any public host, never IPs or local names
+        u = urllib.parse.urlsplit(url)
+        host = (u.hostname or "").lower().rstrip(".")
+        return u.scheme in ("data", "blob") or (
+            u.scheme in ("https", "http", "wss") and not u.username and "." in host
+            and not re.fullmatch(r"[\d.]+|\[?[0-9a-f:]+\]?", host) and not host.endswith((".local", ".internal", ".localhost")))
+
+    def paused(ev, session):  # the page itself (and any frame) must be on the allowlist; subresources must be public
+        if session != p.session:
+            return
+        url = ev["request"]["url"]
+        ok = url_ok(url, allow) if ev.get("resourceType") == "Document" else public(url)
+        b.post("Fetch.continueRequest" if ok else "Fetch.failRequest", {"requestId": ev["requestId"], **(
+            {} if ok else {"errorReason": "BlockedByClient"})}, session)
+    b = Browser(str(home / "profile"), env=browser_env(home))
+    try:
+        p = Page(b)
+        p.send("Page.enable")
+        p.send("Runtime.enable")
+        ua = b.send("Browser.getVersion")["userAgent"].replace("HeadlessChrome", "Chrome")
+        if mobile:
+            ua = re.sub(r"\(X11; Linux x86_64\)", "(Linux; Android 14; Pixel 8)", ua).replace("Safari/", "Mobile Safari/")
+        p.send("Emulation.setUserAgentOverride", {"userAgent": ua, "acceptLanguage": "en-US,en"})
+        p.send("Emulation.setDeviceMetricsOverride", {"width": w, "height": h, "deviceScaleFactor": dpr, "mobile": mobile})
+        p.send("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-color-scheme",
+                                                             "value": "dark" if a.get("dark", True) else "light"}]})
+        b.send("Browser.setDownloadBehavior", {"behavior": "deny"})
+        b.on("Fetch.requestPaused", paused)
+        p.send("Fetch.enable", {"patterns": [{"urlPattern": "*"}]})
+        p.goto(a["url"], timeout=30)
+        time.sleep(min(max(float(a.get("wait_ms", 4000)), 1000), 12000) / 1000)
+        p.eval("new Promise(r => { const im = [...document.images].filter(i => !i.complete); if (!im.length) return r(1);"
+               " let n = im.length; const d = () => --n || r(1);"
+               " im.forEach(i => { i.addEventListener('load', d); i.addEventListener('error', d); }); setTimeout(r, 6000); })")
+        p.eval("document.documentElement.style.scrollbarWidth='none'")
+        m = p.eval("({t: document.title, n: document.body ? document.body.innerText.length : 0})") or {}
+        if m.get("n", 0) < 50:
+            raise JobError(f"the page didn't load ({m.get('t') or 'empty'}); is the site on the allowlist?")
+        p.send("Runtime.evaluate", {"expression": OVERLAY_JS})
+        seen = p.eval(f"window.__studio.seen(0, 0, {w}, {h})") or []
+        shot = p.send("Page.captureScreenshot", {"format": "png"}, timeout=90)
+    finally:
+        b.close()
+    Path(png).write_bytes(base64.b64decode(shot["data"]))
+    if a.get("crop_css"):
+        from PIL import Image
+        y0, y1 = a["crop_css"]
+        with Image.open(png) as im:
+            band = im.crop((0, int(y0 * dpr), im.width, min(im.height, int(y1 * dpr))))
+            band.load()
+        band.save(png)
+    return m.get("t", ""), seen
 
 
 # ---------------- compositor ----------------

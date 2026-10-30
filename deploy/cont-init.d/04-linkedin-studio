@@ -59,6 +59,14 @@ chmod 755 "$SC/results" "$SC/state" && chmod 700 "$SC/work"
 /opt/hermes/.venv/bin/python -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1])).get("video", {})))' \
   "$LH/profile/studio.json" > "$SC/limits.json" 2>/dev/null || echo '{}' > "$SC/limits.json"
 chmod 644 "$SC/limits.json"
+# Video kit media (voice, music, clips): the studio computer drops requests that only gmilab, which holds the GMI key
+# and the video budget, can act on; answers carry media URLs, never the key.
+MQ="$LAB/media"
+mkdir -p "$MQ/queue" "$MQ/results" && chmod 755 "$MQ"
+if id computer >/dev/null 2>&1 && id gmilab >/dev/null 2>&1; then
+  chown computer:gmilab "$MQ/queue" && chmod 2770 "$MQ/queue"
+  chown gmilab:gmilab "$MQ/results" && chmod 755 "$MQ/results"
+fi
 cp "$SRC/deploy/SOUL.md" "$HH/SOUL.md" && chown root:root "$HH/SOUL.md" && chmod 644 "$HH/SOUL.md"
 # The guardrail lists are root-owned too: change them from the console, not through the agent.
 for f in blocklist.txt never_name.txt sponsors.txt studio.json; do
