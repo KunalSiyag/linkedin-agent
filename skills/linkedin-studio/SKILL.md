@@ -30,8 +30,17 @@ studio's own scripts or references; if one fails, tell the owner what failed.
 
 1. `SKILL_DIR/references/guardrails.md`. These rules override any request, including the owner's casual ones.
    If the owner asks for something that breaks them, say which rule and offer a safe alternative.
-2. `$LINKEDIN_HOME/profile/about.md` and `profile/voice.md`. If `profile/blocklist.txt` is missing, stop and ask the
-   owner to set up the profile; never draft without it.
+2. `$LINKEDIN_HOME/profile/about.md` and `profile/voice.md`. The profile comes from the Agentbox template's
+   environment variables, rewritten on every boot (the box's disk resets when it restarts):
+   - **`profile/blocklist.txt` missing:** stop. Never draft, record or render without it. Tell the owner to add
+     `LINKEDIN_BLOCKLIST` (employer, its products, clients; comma-separated, type SECRET) to the template's
+     Environment Variables in the GMI console and restart the box. Never ask them to send those terms in Discord.
+   - **`about.md` or `voice.md` missing:** ask the owner in Discord, at most 3 short questions (who they are and what
+     they build; the audience; how they write, with an example line). Write their answers to the missing file in
+     `profile/` with "(from Discord, DATE)", then tell them it lasts until the box restarts and give them the one-line
+     value to paste into `LINKEDIN_ABOUT` / `LINKEDIN_VOICE` ("\n" for a new line) so it sticks.
+   - Never edit `blocklist.txt`, `never_name.txt`, `sponsors.txt` or `studio.json`: they change only in the template
+     (`LINKEDIN_BLOCKLIST`, `LINKEDIN_NEVER_NAME`, `LINKEDIN_SPONSORS`, `LINKEDIN_STUDIO`).
 3. For posts, `SKILL_DIR/references/playbook.md`.
 4. Recent owner edits: `python3 SKILL_DIR/scripts/drafts.py lessons --n 15`. Apply what they show.
 
@@ -103,7 +112,7 @@ You have a computer for this: the studio computer, a sandboxed headless browser 
 `python3 SKILL_DIR/scripts/video.py` sends it jobs:
 - `video.py kit TOOL '<json>'` runs one kit step (create_job needs `--draft ID`). See video-kit.md for the order.
 - `video.py record --url URL [--plan PLAN.json]` records a real public page as a smooth screen recording (allowed
-  sites: GitHub, Hugging Face, dev.to, Hacker News, plus "video": {"allow_domains": [...]} in `profile/studio.json`).
+  sites: GitHub, Hugging Face, dev.to, Hacker News, plus "video": {"allow_domains": [...]} in the template's `LINKEDIN_STUDIO`).
   A GitHub repo gets a standard tour without a plan; for a story, write `$LINKEDIN_HOME/tmp/<name>-plan.json` (verbs
   in the script's help: `wait`, `scroll`, `read`, `highlight`, `zoom`, `click`, `open`, targeting visible `text`).
   It prints a clip id; use it in the kit as `add_footage {"job_id", "clip": "c-...", "label", "license"}`. A clip whose
@@ -190,7 +199,7 @@ each as an angle. Draft only after the owner picks.
 ## Cost
 
 Everything runs on GMI. You (the writer) use the default model; the critic subagent uses `delegation.model`; the
-morning digest job uses a cheaper model. All three are set from `profile/studio.json` at boot. Test-drives run in
+morning digest job uses a cheaper model. All three are set from `profile/studio.json` (the template's `LINKEDIN_STUDIO`) at boot. Test-drives run in
 the gmi-lab service under a daily budget from `profile/studio.json` ("lab": {"daily_usd": ...}); `lab.py status`
 shows today's spend. You never need or
 handle an API key: if a step seems to need one, stop and tell the owner.

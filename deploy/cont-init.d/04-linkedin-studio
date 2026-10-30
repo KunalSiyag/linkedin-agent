@@ -37,14 +37,9 @@ SRC="$BAKED"
 echo "[linkedin-studio] skills from $SRC ($(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || echo baked))"
 
 as_hermes mkdir -p "$LH/profile" "$LH/drafts" "$LH/facts" "$LH/state" "$LH/tmp" "$LH/hackathons"
-# Agentbox's data disk doesn't survive a container restart: restore the private profile from the LINKEDIN_PROFILE_B64
-# secret (base64 of a tar.gz holding profile/) whenever it's missing.
-if [ ! -f "$LH/profile/blocklist.txt" ] && [ -n "${LINKEDIN_PROFILE_B64:-}" ]; then
-  printf '%s' "$LINKEDIN_PROFILE_B64" | base64 -d | tar xzf - -C "$LH" --no-same-owner profile \
-    && chown -R hermes:hermes "$LH/profile" && chmod 644 "$LH"/profile/* \
-    && echo "[linkedin-studio] profile restored from LINKEDIN_PROFILE_B64" \
-    || echo "[linkedin-studio] LINKEDIN_PROFILE_B64 is set but couldn't be unpacked"
-fi
+# Agentbox's data disk resets with the container, so the profile comes from the template's LINKEDIN_* variables
+# (written root-owned on every boot; the agent can read them but not change its own guardrails).
+/opt/hermes/.venv/bin/python "$SRC/skills/linkedin-studio/scripts/profile_env.py" "$LH/profile"
 # Model lab: the agent queues jobs; only gmilab (the gmi-lab service) writes results, prices and the spend ledger.
 # It lives outside HERMES_HOME (kept 0700 by Hermes) on the container disk, so it resets if the container restarts.
 LAB=/var/lib/gmi-lab

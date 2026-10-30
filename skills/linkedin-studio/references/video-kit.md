@@ -26,7 +26,7 @@ systems), `kit/references/storyboard.md` (storyboard schema, look `land`), `kit/
 - **Music: `generate_music {"job_id": ..., "auto": true}`** (MiniMax Music), max 2 per job. SFX come from the bundled
   CC0 library automatically. There's no ElevenLabs key here: `generate_sfx`, `list_voices` and `credits` don't exist.
 - **Footage:** `capture_page` of the project's pages (same allowed sites as recordings; the owner adds more in
-  `profile/studio.json` "video": {"allow_domains": [...]}), your own screen recordings with
+  the template's `LINKEDIN_STUDIO` "video": {"allow_domains": [...]}), your own screen recordings with
   `add_footage {"job_id", "clip": "c-...", "label", "license": "Screen recording of a public page"}`, and literal
   Pexels clips with `add_footage {"job_id", "url": "https://www.pexels.com/video/...", "label", "license": "Pexels License"}`.
   AI clips (`generate_clip`) are off unless the owner turned on "video": {"ai_clips": true}.

@@ -120,7 +120,7 @@ def check_url(url, allow):
         bad(f"{url[:80]}: use a full https:// URL")
     if not url_ok(url, allow):
         bad(f"{u.hostname} isn't on the studio computer's allowed sites ({', '.join(allow[:6])}, ...); the owner can add "
-            'more in profile/studio.json "video": {"allow_domains": [...]}')
+            'more in the template variable LINKEDIN_STUDIO, "video": {"allow_domains": [...]}')
     return url
 
 
@@ -266,7 +266,7 @@ def check_kit_job(j, lim):
         elif not PEXELS.fullmatch(str(args.get("url", ""))):
             bad("add_footage url must be a Pexels video page (https://www.pexels.com/video/...) or pexels:<id>")
     if tool == "generate_clip" and not lim["ai_clips"]:
-        bad('AI clips are off; the owner can allow them in profile/studio.json "video": {"ai_clips": true}. Use captures, '
+        bad('AI clips are off; the owner can allow them in the template variable LINKEDIN_STUDIO, "video": {"ai_clips": true}. Use captures, '
             "recordings and Pexels footage instead")
     if tool == "set_storyboard":
         sb = args.get("storyboard")

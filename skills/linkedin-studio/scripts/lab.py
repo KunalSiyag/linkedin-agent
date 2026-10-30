@@ -245,7 +245,7 @@ def media_one(key, req):
     lim = media_limits()
     if model.startswith("seedance-"):
         if not lim["ai_clips"]:
-            return {"error": 'AI clips are off; the owner can allow them in profile/studio.json "video": {"ai_clips": true}',
+            return {"error": 'AI clips are off; the owner can allow them in the template variable LINKEDIN_STUDIO, "video": {"ai_clips": true}',
                     "stop_and_report": True}
         payload["duration"] = max(4, min(int(payload.get("duration", 5)), 10))
     usd = round(cost(payload), 4)

@@ -53,9 +53,13 @@ No secrets are baked in; everything sensitive is passed as environment variables
 - **Weekly opportunities (Sat 10:00 IST):** open Devpost hackathons, DEV challenges and talk CFPs (online or India),
   sent privately to Discord.
 
-The owner's private profile (employer blocklist, voice, sponsors) lives in `$LINKEDIN_HOME/profile` on the data
-volume, never in this repo; `profile.example/` shows the format. At boot `deploy/cont-init.d/04-linkedin-studio`
-pulls this repo's latest `main`, so skill changes need only a push and a restart.
+The owner's private profile (employer blocklist, voice, sponsors) is never in this repo. It comes from the Agentbox
+template's `LINKEDIN_*` environment variables (see `agentbox.env.example`; mark `LINKEDIN_BLOCKLIST` SECRET), which
+the boot hook writes to `$LINKEDIN_HOME/profile` as root-owned files on every start: the box's disk resets when the
+container restarts, and the agent can't edit its own guardrails. If `LINKEDIN_ABOUT` or `LINKEDIN_VOICE` is empty,
+the bot asks for them in Discord and says what to paste into the template; without `LINKEDIN_BLOCKLIST` it drafts
+nothing. `profile.example/` shows the format. At boot `deploy/cont-init.d/04-linkedin-studio` also pulls this repo's
+latest `main`, so skill changes need only a push and a restart.
 
 ## Deploy on Agentbox
 
