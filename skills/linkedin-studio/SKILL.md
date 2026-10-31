@@ -1,6 +1,6 @@
 ---
 name: linkedin-studio
-description: "Owner's LinkedIn studio: post and comment drafts from real public work, strict career guardrails, independent critic, visuals (carousels, code cards), videos (narrated video-kit videos with captures, voice and music; screen recordings of public pages such as trending GitHub repos), voice-note ideas, morning digest, weekly opportunities. Use for anything about LinkedIn posts, comments, ideas, visuals, videos or recordings, voice notes, the digest or opportunities."
+description: "Owner's LinkedIn studio: post and comment drafts from real public work, strict career guardrails, independent critic, visuals (carousels, code cards), videos (narrated motion-graphic explainers with AI B-roll, page captures, voice and music; screen recordings of public pages such as trending GitHub repos), voice-note ideas, morning digest, weekly opportunities. Use for anything about LinkedIn posts, comments, ideas, visuals, videos or recordings, voice notes, the digest or opportunities."
 version: 1.0.0
 author: KunalSiyag
 license: MIT
@@ -97,18 +97,21 @@ never say what the post couldn't.
 - **Chart** (`chart ID --file data.json`): bars for test-drive results (speed, cost, pass rate). Values come straight
   from the lab fact sheet; the title states what was measured, not a verdict.
 - **Title card** (`card ID --title "first line" --sub "..."`): only when nothing better exists.
-- **Video** (see Videos, made with the video kit): the best fit for a demo, a repo tour or a "found this on GitHub" post.
+- **Video** (see Videos, an explainer): the best fit for a demo, a repo tour or a "found this on GitHub" post.
 You can't look at images (the studio's models have no vision), so don't try to open or analyse the PNGs. `visuals.py`
 prints the text size each slide ended up at: fix any slide marked "dense" or "OVERFLOW" by cutting words or splitting
 it, then run it again. Files are numbered, nothing is overwritten; `visuals.py list ID` shows them.
 
 ## Videos
 
-Videos are made with the owner's video kit: narrated 16:9 videos with real captures, captions, a rotating
-motion-graphic look, music and SFX, and automatic QA. **Read `SKILL_DIR/references/video-kit.md` and follow it for
-every video.** **When the owner asks for a recording or a video, make it. Don't tell them you can't.** Make it only
-with `video.py` (the kit, recordings): never write your own video, TTS or recording scripts, install tools, or
-create new skills for it. If a kit step fails, tell the owner which step and the error.
+**The default video is the explainer: `video.py explainer --draft ID --file SPEC.json`.** You write only the words
+(a JSON list of scenes); the studio computer does everything else in one job: GMI voiceover, AI B-roll clips
+(Seedance), captures of real pages, music, HyperFrames motion graphics (word-by-word type, browser-window page
+tours, terminal typing, count-up stats), captions, a -14 LUFS mix and a file sized for Discord. **Read
+`SKILL_DIR/references/explainer.md` and follow it for every video.** **When the owner asks for a recording or a
+video, make it. Don't tell them you can't.** Make it only with `video.py`: never write your own video, HTML, TTS or
+recording scripts, install tools, or create new skills for it. If a job fails, tell the owner the step and the error.
+The video kit (`video.py kit`, `references/video-kit.md`) is for when the owner asks for that kit's looks by name.
 
 You have a computer for this: the studio computer, a sandboxed headless browser plus ffmpeg running as its own user.
 `python3 SKILL_DIR/scripts/video.py` sends it jobs:

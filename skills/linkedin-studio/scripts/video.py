@@ -59,7 +59,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 COMPUTER = Path(os.environ.get("STUDIO_COMPUTER_DIR", "/var/lib/studio-computer"))
 QUEUE, RESULTS, WORK = COMPUTER / "queue", COMPUTER / "results", COMPUTER / "work"
-JOB_ID = re.compile(r"[cvk]-\d{4}-\d{6}-[a-z0-9-]{1,40}")
+JOB_ID = re.compile(r"[cvke]-\d{4}-\d{6}-[a-z0-9-]{1,40}")
 KIT_JOB_ID = re.compile(r"\d{8}-[a-z0-9-]{1,40}")
 STEP_VERBS = {"wait", "scroll", "read", "highlight", "zoom", "click", "open"}
 SCENES = {"title", "clip", "points", "stat", "code", "chart", "end"}
@@ -75,6 +75,18 @@ KIT_TOOLS = {"doctor", "patterns", "pick_pattern", "list_jobs", "create_job", "a
              "generate_music", "set_storyboard", "preview", "render_video", "qa_render", "export_stills", "licenses"}
 KIT_NO_JOB = {"doctor", "patterns", "list_jobs", "create_job"}
 PEXELS = re.compile(r"(https://(www\.)?pexels\.com/video/[\w-]+/?|pexels:\d+|https://videos\.pexels\.com/video-files/\d+/[\w.-]+\.mp4)")
+# The explainer (explainer.py): fixed HyperFrames scenes the agent fills with words; AI B-roll, page captures, voice,
+# music and the mix are made on the studio computer in one job.
+HF_BIN = os.environ.get("HYPERFRAMES_BIN", "/usr/local/bin/hyperframes")
+HF_SHELL = os.environ.get("HYPERFRAMES_SHELL", "/opt/hyperframes/chrome-headless-shell")
+EXPL_NEED = {"hook": ["headline", "broll"], "title": ["title"], "page": ["url"], "terminal": ["command"], "stat": ["value", "label"],
+             "points": ["items"], "broll": ["broll"], "close": ["line"]}
+EXPL_TEXT = {"headline": 90, "kicker": 40, "title": 90, "sub": 110, "label": 60, "find": 80, "command": 80, "value": 12, "line": 90,
+             "link": 60, "note": 50}
+EXPL_MUSIC = ("calm minimal electronic instrumental for a developer explainer video: soft warm pads, gentle piano motif, light muted "
+              "percussion, steady and focused, modern and clean, no vocals, no big drops")
+EXPL_CLIP = (" Cinematic, photoreal, soft natural light, shallow depth of field, slow steady camera move, muted cool colour grade, "
+             "no text, no logos, no watermarks, no on-screen UI text.")
 CTA_BAIT = re.compile(r"\bcomment\s+[\"'“”‘’]?\w+[\"'“”‘’]?\s+(for|and|to get|below)\b|\bfollow\s+for\s+day\b|\bday\s+\d+\s+of\b", re.I)
 PAGE_BLOCKS = {"no-profile", "blocklist", "never-name"}
 PAGE_WARNS = {"personal", "controversy", "secret"}
@@ -286,6 +298,61 @@ def check_kit_job(j, lim):
     return j
 
 
+def check_explainer_job(j, lim):
+    if j.get("v") != 1 or j.get("kind") != "explainer" or not JOB_ID.fullmatch(str(j.get("id", ""))):
+        bad("not a version-1 explainer job (the image may be older than the skill: rebuild it)")
+    spec = j.get("spec")
+    if not isinstance(spec, dict) or not isinstance(spec.get("scenes"), list):
+        bad('the spec is {"title": ..., "scenes": [...]}')
+    if not isinstance(spec.get("title"), str) or not 3 <= len(spec["title"]) <= 80:
+        bad("title: a short working title (3-80 chars)")
+    sc = spec["scenes"]
+    if not 4 <= len(sc) <= 9:
+        bad("use 4-9 scenes")
+    if sc[0].get("type") != "hook" or sc[-1].get("type") != "close":
+        bad("the first scene is a hook and the last is a close")
+    clips = pages = 0
+    total = 0
+    for k, s in enumerate(sc, 1):
+        t = s.get("type") if isinstance(s, dict) else None
+        if t not in EXPL_NEED:
+            bad(f"scene {k}: type must be one of {', '.join(EXPL_NEED)}")
+        for f in EXPL_NEED[t] + ["say"]:
+            if not s.get(f):
+                bad(f"scene {k} ({t}) needs '{f}'")
+        say = s["say"]
+        if not isinstance(say, str) or "[" in say or not 3 <= len(say.split()) <= 40:
+            bad(f"scene {k}: 'say' is the 3-40 words the voice speaks during it (no [tags])")
+        total += len(say.split())
+        for f, n in EXPL_TEXT.items():
+            if f in s and (not isinstance(s[f], str) or len(s[f]) > n):
+                bad(f"scene {k}: '{f}' must be text under {n} chars")
+        if t in ("hook", "broll"):
+            clips += 1
+            if not isinstance(s["broll"], str) or not 20 <= len(s["broll"]) <= 400:
+                bad(f"scene {k}: 'broll' is a 20-400 char description of the shot (what the camera sees, no text on screen)")
+            if len(say.split()) > 24:
+                bad(f"scene {k}: a {t} scene runs over one AI clip (max 10 s): keep 'say' under 24 words")
+        if t == "page":
+            pages += 1
+            check_url(str(s["url"]), lim["allow"])
+        if t == "terminal" and (not isinstance(s.get("output", []), list) or len(s.get("output", [])) > 5
+                                or any(not isinstance(o, str) or len(o) > 90 for o in s.get("output", []))):
+            bad(f"scene {k}: 'output' is up to 5 lines of up to 90 chars")
+        if t == "points" and (not isinstance(s["items"], list) or not 2 <= len(s["items"]) <= 4
+                              or any(not isinstance(x, str) or len(x) > 60 for x in s["items"])):
+            bad(f"scene {k}: 'items' is 2-4 short lines (up to 60 chars each)")
+    if clips > 3 or pages > 3:
+        bad("use at most 3 AI clips (hook + 2 broll) and 3 page captures")
+    if not 40 <= total <= 150:
+        bad(f"the voiceover is {total} words; keep it 40-150 (about 15-55 s)")
+    if not lim["ai_clips"]:
+        bad('AI B-roll is off: the owner turns it on in the template variable LINKEDIN_STUDIO, "video": {"ai_clips": true}')
+    j["accent"] = j.get("accent") if re.fullmatch(r"#[0-9a-fA-F]{6}", str(j.get("accent", ""))) else "#7cc4ff"
+    j["watermark"] = str(j.get("watermark", ""))[:40]
+    return j
+
+
 # ---------------- agent side ----------------
 
 def studio():
@@ -340,6 +407,8 @@ def wait(i, seconds):
                                                        "check the studio-computer service log"))
     elif i.startswith("k-"):
         print(f"{i}: still running (kit renders take 3-10 minutes on this box). Run: video.py wait {i}")
+    elif i.startswith("e-"):
+        print(f"{i}: still running ({s.get('note', 'working')}). Run: video.py wait {i}")
     else:
         f, n = s.get("frame", 0), s.get("frames") or 1
         print(f"{i}: still rendering ({f}/{n} frames, {100 * f // n}%). Run: video.py wait {i}")
@@ -557,6 +626,69 @@ def cmd_kit(a):
         finish(job["id"], s)
 
 
+def cmd_explainer(a):
+    lp, lim = studio(), limits()
+    d = lp.HOME / "drafts" / a.draft
+    if not (d / "meta.json").exists():
+        sys.exit(f"no draft {a.draft}: every video belongs to a post draft (drafts.py new first)")
+    try:
+        spec = json.loads(Path(a.file).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        sys.exit(f"can't read the spec: {e}")
+    job = {"v": 1, "kind": "explainer", "id": f"e-{now().strftime('%m%d-%H%M%S')}-{slug(a.draft, 34)}", "draft": a.draft,
+           "spec": spec, "accent": settings()["accent"], "watermark": settings()["footer"],
+           "queued": now().isoformat(timespec="seconds")}
+    try:
+        job = check_explainer_job(job, lim)
+    except ValueError as e:
+        sys.exit(str(e))
+    facts = (d / "facts.md").read_text(encoding="utf-8") if (d / "facts.md").exists() else None
+    sc = spec["scenes"]
+    script = " ".join(s["say"] for s in sc)
+    shown = [s.get(f, "") for s in sc for f in ("headline", "kicker", "title", "sub", "label", "value", "line", "note")]
+    shown += [x for s in sc for x in s.get("items", [])]
+    code = [s.get("command", "") + "\n" + "\n".join(s.get("output", [])) for s in sc]
+    prompts = [s.get("broll", "") for s in sc]
+    failed = False
+    if m := CTA_BAIT.search(script + "\n" + "\n".join(shown)):
+        print(f"BLOCK cta: {m.group(0)!r} is the Instagram comment-word/day-series CTA; on LinkedIn end on where the code is")
+        failed = True
+    for text, codes, use_facts in (("\n".join([script] + [x for x in shown if x]), None, True), ("\n".join(code), CODE_BLOCKS, False),
+                                   ("\n".join(prompts), PAGE_BLOCKS | {"personal", "workplace"}, False)):
+        if not text.strip():
+            continue
+        for f in lp.lint(text.replace("**", ""), "comment", facts if use_facts else None):
+            if f["level"] == "BLOCK" and f["code"] != "length" and (codes is None or f["code"] in codes):
+                print(f"BLOCK {f['code']}: {f['msg']}" + (f"  {f['hits']}" if f.get("hits") else ""))
+                failed = True
+    if failed:
+        sys.exit(1)
+    clips = sum(1 for s in sc if s["type"] in ("hook", "broll"))
+    est = 0.10 * len(script) / 1000 + 0.15 + clips * 0.231 * 8
+    queue(job)
+    print(f"queued {job['id']}: {len(sc)} scenes, {len(script.split())} spoken words, {clips} AI clip(s), up to ${est:.2f} "
+          "(voice, music, clips). It takes 10-20 minutes: the command waits ~2.5 min, then run video.py wait JOB")
+    s = wait(job["id"], a.wait)
+    if s:
+        finish(job["id"], s)
+
+
+def show_explainer(i, s):
+    r = json.loads((RESULTS / i / "result.json").read_text())
+    for f in sorted((RESULTS / i).glob("seen-*.txt")):
+        res = studio().lint(f.read_text(encoding="utf-8"), "post", None)
+        blocks = [x for x in res if x["level"] == "BLOCK" and x["code"] in PAGE_BLOCKS]
+        if blocks:
+            sys.exit(f"a page capture showed text that can't go on LinkedIn ({blocks[0]['msg']}); pick another page and make it again")
+    files = deliver(i, r, {"draft": r["draft"], "size": "explainer", "scenes": r["scenes"]})
+    mb = Path(files[0]).stat().st_size / 1048576
+    print(f"explainer {i}: {r['seconds']} s, 1920x1080, {mb:.1f} MB for Discord ({r.get('encode', '')}); "
+          f"{r['clips']} AI clip(s), loudness {r.get('lufs', '?')} LUFS, made in {r.get('render_s', '?')} s")
+    print(f"  scenes: {', '.join(x['type'] for x in r['scenes'])}")
+    print(f"  poster and contact sheet: {', '.join(Path(f).name for f in files[1:])}")
+    print(f"MEDIA:{files[0]}")
+
+
 def show_kit(i, s):
     r = json.loads((RESULTS / i / "result.json").read_text())
     out = r.get("kit") or {}
@@ -647,7 +779,7 @@ def show_video(i, s):
 def finish(i, s):
     if s["state"] == "failed":
         sys.exit(f"{i} failed: {s.get('note', 'unknown error')}")
-    {"c": show_clip, "v": show_video, "k": show_kit}[i[0]](i, s)
+    {"c": show_clip, "v": show_video, "k": show_kit, "e": show_explainer}[i[0]](i, s)
 
 
 def cmd_wait(a):
@@ -693,6 +825,129 @@ def write_status(i, **s):
     tmp.replace(d / "status.json")
 
 
+def kit_call(tool, args, work, lim, watermark=""):
+    """The kit's own CLI with no keys in its environment; GMI goes through the gmi-lab proxy. -> its JSON."""
+    import video_engine as eng
+    from cdp import chrome
+    for d in ("jobs", "notes"):
+        (KIT_STATE / d).mkdir(parents=True, exist_ok=True)
+    KIT_STATE.chmod(0o700)
+    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(work), "TMPDIR": str(work), "LANG": "C.UTF-8",
+           "STUDIO_JOBS_DIR": str(KIT_STATE / "jobs"), "STUDIO_NOTES_DIR": str(KIT_STATE / "notes"),
+           "STUDIO_HISTORY_FILE": str(KIT_STATE / "history.json"), "STUDIO_VENV_PYTHON": sys.executable,
+           "STUDIO_PYTHON": sys.executable, "CHROME_BIN": chrome(), "MEDIA_PROVIDER": "gmi",
+           "STUDIO_GMI_PROXY": str(GMI_PROXY), "STUDIO_WATERMARK": watermark,
+           "STUDIO_WORKERS": str(len(os.sched_getaffinity(0))), "HF_HOME": str(KIT_STATE / "hf")}
+    p = subprocess.run([sys.executable, str(KIT / "lib" / "studio.py"), tool, json.dumps(args)], cwd=KIT, env=env,
+                       capture_output=True, text=True, timeout=lim["kit_timeout"])
+    try:
+        return json.loads(p.stdout[p.stdout.index("{"):])
+    except ValueError:
+        raise eng.JobError(f"the kit printed no result (exit {p.returncode}): {(p.stderr or p.stdout)[-300:]}")
+
+
+def run_explainer(job, out, work, lim, note):
+    """Voice -> timings -> AI B-roll and page captures -> music -> HyperFrames render -> mix to -14 LUFS -> delivery."""
+    import math
+    import explainer
+    import video_engine as eng
+    from PIL import Image
+    spec, t0 = job["spec"], time.monotonic()
+    scenes = spec["scenes"]
+
+    def kit(tool, args, what):
+        note(what)
+        res = kit_call(tool, args, work, lim, job["watermark"])
+        if not res.get("ok"):
+            stop = " Stop and tell the owner (budget, credits or the GMI key)." if res.get("stop_and_report") else ""
+            raise eng.JobError(f"{what} failed: {res.get('error') or res.get('errors')}{stop}"[:400])
+        return res
+
+    jid = kit("create_job", {"topic": spec["title"], "working_title": spec["title"], "look": "trending",
+                             "category": spec.get("category", "repos")}, "starting the job")["job_id"]
+    jd = KIT_STATE / "jobs" / jid
+    script = " ".join(s["say"].strip() for s in scenes)
+    kit("generate_voiceover", {"job_id": jid, "script": script}, "recording the voiceover")
+    kit("tighten_voice", {"job_id": jid, "max_gap": 0.22, "tempo": 1.0}, "tightening the voiceover")
+    words = json.loads((jd / "voice" / "words.json").read_text())
+    if len(words) != len(script.split()):
+        raise eng.JobError(f"the voice's word timings ({len(words)}) don't match the script ({len(script.split())} words)")
+    win = explainer.timings(scenes, words)
+    proj = Path(work) / "hf"
+    (proj / "assets").mkdir(parents=True)
+    shutil.copy(HERE.parent / "hf" / "gsap.min.js", proj / "assets" / "gsap.min.js")
+    assets, n_clip, n_clips = [], 0, sum(1 for s in scenes if s["type"] in ("hook", "broll"))
+    for i, (s, (a, b, _, _)) in enumerate(zip(scenes, win)):
+        x = {}
+        if s["type"] in ("hook", "broll"):
+            n_clip += 1
+            dur = max(5, min(10, math.ceil(b - a) + 1))
+            kit("generate_clip", {"job_id": jid, "id": f"s{i}", "prompt": s["broll"].strip().rstrip(".") + "." + EXPL_CLIP, "label": s.get("label") or s["type"],
+                                  "duration": dur, "resolution": "1080p", "ratio": "16:9"}, f"generating AI B-roll {n_clip}/{n_clips} (a few minutes each)")
+            shutil.copy(jd / "footage" / f"s{i}.mp4", proj / "assets" / f"s{i}.mp4")
+            x["clip"] = f"assets/s{i}.mp4"
+        if s["type"] == "page":
+            u = urllib.parse.urlsplit(s["url"])
+            note(f"capturing {u.hostname}")
+            shot = {"url": s["url"], "viewport": "desktop", "width": 1280, "height": 3200, "dpr": 1.5, "dark": True,
+                    "find": s.get("find") or s.get("label") or ""}
+            png = Path(work) / f"p{i}.png"
+            title, seen = eng.page_shot(shot, png, work, lim["allow"])
+            (out / f"seen-{i}.txt").write_text("\n".join([title, s["url"], *seen])[:200000], encoding="utf-8")
+            with Image.open(png) as im:
+                h = round(im.height * 1280 / im.width)
+                im.convert("RGB").resize((1280, h), Image.LANCZOS).save(proj / "assets" / f"p{i}.jpg", quality=88)
+            fy = shot.get("found_y")
+            x.update(img=f"assets/p{i}.jpg", height=h, focus_y=float(fy) if isinstance(fy, (int, float)) else min(h - 300, 640),
+                     host=(u.hostname or "") + (u.path.rstrip("/") if len(u.path) > 1 else ""))
+        assets.append(x)
+    doc, total, win = explainer.build(spec, words, assets, accent=job["accent"])
+    kit("generate_music", {"job_id": jid, "prompt": EXPL_MUSIC, "seconds": round(total + 1.5, 1)}, "composing the music")
+    (proj / "index.html").write_text(doc, encoding="utf-8")
+    (proj / "hyperframes.json").write_text('{"name": "explainer"}')
+    note("rendering the motion graphics")
+    hf_env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(work), "TMPDIR": str(work), "LANG": "C.UTF-8",
+              "HYPERFRAMES_NO_TELEMETRY": "1", "HYPERFRAMES_SKIP_SKILLS": "1", "HYPERFRAMES_CONFIG_DIR": str(Path(work) / ".hf"),
+              "PRODUCER_HEADLESS_SHELL_PATH": HF_SHELL, "HYPERFRAMES_FONT_CACHE_DIR": str(Path(work) / ".fonts")}
+    silent = Path(work) / "silent.mp4"
+    r = subprocess.run([HF_BIN, "render", "--quality", "delivery", "--workers", str(len(os.sched_getaffinity(0))),
+                        "--browser-timeout", "180", "--output", str(silent)], cwd=proj, env=hf_env, capture_output=True, text=True,
+                       timeout=lim["kit_timeout"])
+    if r.returncode or not silent.exists():
+        raise eng.JobError(f"the HyperFrames render failed: {(r.stderr or r.stdout)[-400:]}")
+    note("mixing voice and music")
+    master = out / "master.mp4"
+    mix = Path(work) / "mix.wav"
+    fc = (f"[0:a]aresample=48000,apad,asplit[v1][v2];[1:a]aresample=48000,volume=0.24,afade=t=in:d=1.2,"
+          f"afade=t=out:st={max(0.0, total - 2.6):.2f}:d=2.5[m];[m][v1]sidechaincompress=threshold=0.04:ratio=5:attack=25:release=450[md];"
+          f"[v2][md]amix=inputs=2:duration=longest:normalize=0,atrim=0:{total:.3f}[a]")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(jd / "voice" / "voice.mp3"), "-i", str(jd / "audio" / "music.mp3"),
+                    "-filter_complex", fc, "-map", "[a]", "-c:a", "pcm_s16le", str(mix)], check=True, timeout=600)
+    # Two-pass loudnorm: one pass undershoots short clips by 1-2 LU.
+    p1 = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(mix), "-af", "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json",
+                         "-f", "null", "-"], capture_output=True, text=True, timeout=600)
+    try:
+        ms = json.loads(p1.stderr[p1.stderr.rindex("{"):p1.stderr.rindex("}") + 1])
+        ln = (f"loudnorm=I=-14:TP=-1.5:LRA=11:measured_I={ms['input_i']}:measured_TP={ms['input_tp']}:measured_LRA={ms['input_lra']}:"
+              f"measured_thresh={ms['input_thresh']}:offset={ms['target_offset']}:linear=true")
+    except (ValueError, KeyError):
+        ln = "loudnorm=I=-14:TP=-1.5:LRA=11"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(silent), "-i", str(mix), "-map", "0:v", "-map", "1:a", "-c:v", "copy",
+                    "-af", f"{ln},aresample=48000", "-c:a", "aac", "-b:a", "192k", "-t", f"{total:.3f}", "-movflags", "+faststart",
+                    str(master)], check=True, timeout=600)
+    q = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(master), "-filter_complex", "ebur128", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    m = re.search(r"I:\s+(-?[\d.]+) LUFS", q.stderr[q.stderr.rfind("Summary:"):])
+    note("packing it for Discord")
+    enc = eng.fit_size(master, out / "video.mp4", lim["max_mb"], work, audio=True)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{min(1.6, total / 3):.2f}", "-i", str(master), "-frames:v", "1", "-q:v", "3",
+                    str(out / "poster.jpg")], check=False)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(master), "-vf", f"fps=12/{total:.3f},scale=480:270,tile=4x3:padding=6",
+                    "-frames:v", "1", "-q:v", "4", str(out / "sheet.jpg")], check=False)
+    return {"tool": "explainer", "draft": job["draft"], "job_id": jid, "seconds": round(total, 2), "clips": n_clips,
+            "lufs": float(m.group(1)) if m else None, "encode": enc, "scenes": scenes, "render_s": round(time.monotonic() - t0, 1)}
+
+
 def run_kit(job, out, work, lim):
     """One kit tool call: the kit's own CLI with no keys in its environment; GMI goes through the gmi-lab proxy."""
     import video_engine as eng
@@ -714,21 +969,7 @@ def run_kit(job, out, work, lim):
         if not src.exists():
             raise ValueError("that recording is gone (recordings are kept two weeks); record the page again")
         args["path"] = str(src)
-    for d in ("jobs", "notes"):
-        (KIT_STATE / d).mkdir(parents=True, exist_ok=True)
-    KIT_STATE.chmod(0o700)
-    env = {"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": str(work), "TMPDIR": str(work), "LANG": "C.UTF-8",
-           "STUDIO_JOBS_DIR": str(KIT_STATE / "jobs"), "STUDIO_NOTES_DIR": str(KIT_STATE / "notes"),
-           "STUDIO_HISTORY_FILE": str(KIT_STATE / "history.json"), "STUDIO_VENV_PYTHON": sys.executable,
-           "STUDIO_PYTHON": sys.executable, "CHROME_BIN": chrome(), "MEDIA_PROVIDER": "gmi",
-           "STUDIO_GMI_PROXY": str(GMI_PROXY), "STUDIO_WATERMARK": job["watermark"],
-           "STUDIO_WORKERS": str(len(os.sched_getaffinity(0))), "HF_HOME": str(KIT_STATE / "hf")}
-    p = subprocess.run([sys.executable, str(KIT / "lib" / "studio.py"), tool, json.dumps(args)], cwd=KIT, env=env,
-                       capture_output=True, text=True, timeout=lim["kit_timeout"])
-    try:
-        res = json.loads(p.stdout[p.stdout.index("{"):])
-    except ValueError:
-        raise eng.JobError(f"the kit printed no result (exit {p.returncode}): {(p.stderr or p.stdout)[-300:]}")
+    res = kit_call(tool, args, work, lim, job["watermark"])
     r = {"tool": job["tool"], "draft": job.get("draft"), "job_id": args.get("job_id") or res.get("job_id"), "kit": res}
     jd = KIT_STATE / "jobs" / str(r["job_id"] or "")
     if res.get("ok") and r["job_id"]:
@@ -777,6 +1018,15 @@ def cmd_run(a):
         job = json.loads((QUEUE / f"{i}.json").read_text())
         if job.get("id") != i:
             raise ValueError("job id mismatch")
+        if job.get("kind") == "explainer":
+            job = check_explainer_job(job, lim)
+            out.mkdir(parents=True, exist_ok=True)
+            write_status(i, state="running", note="starting")
+            r = run_explainer(job, out, work, lim, lambda what: (write_status(i, state="running", note=what), log(f"{i}: {what}")))
+            (out / "result.json").write_text(json.dumps(r, indent=1, ensure_ascii=False))
+            write_status(i, state="done")
+            log(f"{i}: explainer done, {r['seconds']} s in {r['render_s']} s")
+            return
         if job.get("kind") == "kit":
             job = check_kit_job(job, lim)
             out.mkdir(parents=True, exist_ok=True)
@@ -839,7 +1089,7 @@ def cmd_serve(a):
             p = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "run", i], start_new_session=True)
             lim = limits()
             try:
-                p.wait(timeout=lim["kit_timeout"] + 60 if i.startswith("k-") else lim["job_timeout"])
+                p.wait(timeout=lim["kit_timeout"] + 60 if i[0] in "ke" else lim["job_timeout"])
             except subprocess.TimeoutExpired:
                 os.killpg(p.pid, signal.SIGKILL)
                 p.wait()
@@ -875,6 +1125,10 @@ def main():
     s = sub.add_parser("status")
     s.add_argument("job", nargs="?")
     sub.add_parser("clips")
+    e = sub.add_parser("explainer")
+    e.add_argument("--draft", required=True)
+    e.add_argument("--file", required=True)
+    e.add_argument("--wait", type=float, default=150)
     k = sub.add_parser("kit")
     k.add_argument("tool")
     k.add_argument("args", nargs="?", help="JSON object, or @file.json")
@@ -883,7 +1137,7 @@ def main():
     sub.add_parser("serve")
     sub.add_parser("run").add_argument("job")
     a = ap.parse_args()
-    {"record": cmd_record, "make": cmd_make, "wait": cmd_wait, "status": cmd_status, "clips": cmd_clips, "kit": cmd_kit,
+    {"record": cmd_record, "make": cmd_make, "wait": cmd_wait, "status": cmd_status, "clips": cmd_clips, "kit": cmd_kit, "explainer": cmd_explainer,
      "serve": cmd_serve, "run": cmd_run}[a.cmd](a)
 
 

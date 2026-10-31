@@ -38,6 +38,12 @@ No secrets are baked in; everything sensitive is passed as environment variables
   stagger and reading-time rules baked into `assets/video/`, so any GMI model gets good motion without seeing frames.
   On-screen text passes the post linter; recorded page text passes the private-term checks. Output fits Discord's
   attachment limit (`max_mb`, default 9.5).
+- **Explainer videos (the default):** `video.py explainer` turns a short JSON list of scenes (what the voice says, plus a
+  headline, a page URL, a command or a number) into a calm 1080p LinkedIn explainer in one studio-computer job: GMI
+  voiceover with word timings, Seedance AI B-roll, real page captures in a browser window that scrolls to the section
+  being discussed, terminal typing, count-up stats and word-by-word captions on fixed
+  [HyperFrames](https://github.com/heygen-com/hyperframes) + GSAP templates (`scripts/explainer.py`), MiniMax music
+  ducked under the voice and mixed to -14 LUFS. The model writes only words, so the design doesn't depend on it.
 - **Narrated videos with the video kit** (`skills/linkedin-studio/kit/`, the owner's Dazzbuilds reel pipeline adapted for
   LinkedIn): `video.py kit TOOL` runs each step on the studio computer: page captures (allowlisted pages, CDN assets
   allowed), Pexels clips and screen recordings as footage, a GMI MiniMax voiceover with faster-whisper word timings,

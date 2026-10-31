@@ -29,6 +29,17 @@ RUN useradd --system --no-create-home --shell /usr/sbin/nologin computer \
 COPY skills/linkedin-studio/assets/fonts/Inter.ttf skills/linkedin-studio/assets/fonts/JetBrainsMono.ttf /usr/local/share/fonts/studio/
 COPY deploy/fonts/studio-fonts.conf /etc/fonts/conf.d/60-studio-fonts.conf
 RUN fc-cache -f >/dev/null
+# HyperFrames (Apache-2.0) renders the explainer videos (HTML + GSAP -> MP4) with its own pinned headless Chrome,
+# linked to a fixed path so the studio computer (no HOME, no env) finds it.
+ENV HYPERFRAMES_NO_TELEMETRY=1 HYPERFRAMES_SKIP_SKILLS=1
+RUN mkdir -p /opt/hyperframes \
+ && printf '{"private": true, "allowScripts": {"esbuild": true}}\n' > /opt/hyperframes/package.json \
+ && npm install --prefix /opt/hyperframes --no-fund --no-audit --omit=dev hyperframes@0.8.221 \
+ && ln -s /opt/hyperframes/node_modules/.bin/hyperframes /usr/local/bin/hyperframes \
+ && HOME=/opt/hyperframes hyperframes browser ensure >/dev/null \
+ && ln -s "$(HOME=/opt/hyperframes hyperframes browser path | tail -1)" /opt/hyperframes/chrome-headless-shell \
+ && test -x /opt/hyperframes/chrome-headless-shell \
+ && chmod -R a+rX /opt/hyperframes
 COPY --chmod=0755 deploy/s6-rc.d/studio-computer/ /etc/s6-overlay/s6-rc.d/studio-computer/
 RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/studio-computer
 

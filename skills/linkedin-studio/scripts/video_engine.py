@@ -607,6 +607,9 @@ def page_shot(a, png, work, allow):
             raise JobError(f"the page didn't load ({m.get('t') or 'empty'}); is the site on the allowlist?")
         p.send("Runtime.evaluate", {"expression": OVERLAY_JS})
         seen = p.eval(f"window.__studio.seen(0, 0, {w}, {h})") or []
+        if a.get("find"):  # where the phrase the voice names sits on the page (CSS px), for the explainer's camera
+            hit = p.eval(f"window.__studio.find(null, {json.dumps(str(a['find'])[:120])})") or {}
+            a["found_y"] = hit.get("by", hit.get("y")) if isinstance(hit, dict) and "y" in hit else None
         shot = p.send("Page.captureScreenshot", {"format": "png"}, timeout=90)
     finally:
         b.close()
